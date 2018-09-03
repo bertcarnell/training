@@ -1,0 +1,460 @@
+---
+title: "Coursera Machine Learning Exercise 2"
+author: "Rob Carnell"
+date: "January 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+# plotting
+require(ggplot2)
+require(scales)
+# penalized logistic regression
+require(glmnet)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "hb82795")
+{
+  repositoryPath <- file.path("C:", "developer","repositories","DataAnalyticsTeam")
+}
+stopifnot(file.exists(repositoryPath))
+
+dataPath <- file.path(repositoryPath, "Training", "Coursera_Machine_Learning", 
+                      "machine-learning-ex2", "data")
+```
+
+# Logistic Regression
+
+## Read in the Data
+
+```{r}
+ex2data <- read.table(file.path(dataPath, "ex2data1.txt"), header = FALSE,
+                      sep = ",")
+names(ex2data) <- c("exam1", "exam2", "admitted")
+print(ex2data[1:5,])
+```
+
+## Plot the Data
+
+```{r}
+plot(ex2data$exam1, ex2data$exam2, pch=ifelse(ex2data$admitted, 3, 19),
+     col=ifelse(ex2data$admitted, "black", "yellow"),
+     ylab="Exam2", xlab="Exam1")
+legend("topright", legend=c("Admitted","Denied"),
+        pch=c(3,19),col=c("black","yellow"))
+```
+
+## Equations
+
+```{r}
+sigmoid <- function(z) 1 / (1 + exp(-1*z))
+stopifnot(sigmoid(0) == 0.5)
+stopifnot(abs(sigmoid(100) - 1) < 1E-6)
+stopifnot(abs(sigmoid(-100)) < 1E-6)
+
+# in R, the sigmoid function is a special case of plogis
+stopifnot(plogis(0) == 0.5)
+stopifnot(abs(plogis(10) - sigmoid(10)) < 1E-6)
+stopifnot(abs(plogis(-10) - sigmoid(-10)) < 1E-9)
+
+# the log of the sigmoid can be found by
+stopifnot(abs(plogis(0, log.p=TRUE) - log(sigmoid(0))) < 1E-9)
+stopifnot(abs(plogis(10, log.p=TRUE) - log(sigmoid(10))) < 1E-9)
+stopifnot(abs(plogis(-10, log.p=TRUE) - log(sigmoid(-10))) < 1E-9)
+
+# the log of 1-sigmoid can be found by
+stopifnot(abs(log(1-plogis(0)) - log(1-sigmoid(0))) < 1E-9)
+stopifnot(abs(log(1-plogis(10)) - log(1-sigmoid(10))) < 1E-9)
+stopifnot(abs(log(1-plogis(-10)) - log(1-sigmoid(-10))) < 1E-9)
+
+bindOnes <- function(X)
+{
+  m <- nrow(X)
+  return(matrix(c(rep(1,m), X), nrow=m))
+}
+stopifnot(all(c(bindOnes(matrix(c(1,2,3,4,5,6),nrow=3))) == c(1,1,1,1,2,3,4,5,6)))
+
+createColumnVec <- function(z)
+{
+  return(matrix(z, ncol=1))
+}
+
+computeCost <- function(X, y, theta)
+{
+  # cost
+  m <- length(y)
+  temp <- X %*% theta
+  log_h_theta <- plogis(temp, log.p = TRUE)
+  log_1_minus_h_theta <- log(1-plogis(temp))
+  J <- 1 / m * sum(-1*y*log_h_theta - (1-y)*log_1_minus_h_theta)
+  # gradient
+  dJ <- 1 / m * t(X) %*% (plogis(temp) - y)
+  return(list(J=J, dJ=dJ))
+}
+
+```
+
+## Test the Equations (Unit Tests)
+
+```{r}
+X <- bindOnes(as.matrix(ex2data[,1:2]))
+y <- createColumnVec(ex2data$admitted)
+theta <- matrix(0, nrow=3, ncol=1)
+res <- computeCost(X, y, theta)
+stopifnot(abs(res$J - 0.693) < 0.001)
+stopifnot(abs(res$dJ[1,1] - (-0.1000)) < 1E-4)
+stopifnot(abs(res$dJ[2,1] - (-12.0092)) < 1E-4)
+stopifnot(abs(res$dJ[3,1] - (-11.2628)) < 1E-4)
+
+theta <- matrix(c(-24, 0.2, 0.2), nrow=3, ncol=1)
+res <- computeCost(X, y, theta)
+stopifnot(abs(res$J - 0.218) < 0.001)
+stopifnot(abs(res$dJ[1,1] - (0.043)) < 1E-3)
+stopifnot(abs(res$dJ[2,1] - (2.566)) < 1E-3)
+stopifnot(abs(res$dJ[3,1] - (2.647)) < 1E-3)
+```
+
+## Optimize
+
+```{r}
+# for the optim algorithm, the parameters to optimize (theta), must
+#   be the first argument
+optimComputeCost <- function(theta, X, y)
+{
+  # cost
+  m <- length(y)
+  theta <- matrix(theta, nrow=ncol(X))
+  temp <- X %*% theta
+  log_h_theta <- plogis(temp, log.p = TRUE)
+  log_1_minus_h_theta <- log(1-plogis(temp))
+  J <- 1 / m * sum(-1*y*log_h_theta - (1-y)*log_1_minus_h_theta)
+  J <- ifelse(is.na(J), .Machine$double.xmax, J)
+  return(J)
+}
+
+#optimComputeCost(c(-24,0.2,0.2), as.matrix(X), y)
+#optimComputeCost(c(-10,0.5,0.5), as.matrix(X), y)
+
+optimCostGradient <- function(theta, X, y)
+{
+  m <- length(y)
+  temp <- X %*% theta
+  dJ <- 1 / m * t(X) %*% (plogis(temp) - y)
+  return(dJ)
+}
+
+o <- optim(c(-23,0.4,0.4), optimComputeCost, gr=optimCostGradient,
+           X=X, y=y, method="L-BFGS-B")
+
+stopifnot(o$convergence == 0)
+stopifnot(abs(o$value - 0.203) < 1E-3)
+stopifnot(abs(computeCost(X, y, matrix(o$par, ncol=1))$J - 0.203) < 1E-3)
+
+```
+
+## Plot the boundary
+
+$0.5 = plogis(0) = plogis(\theta^T x)$
+
+$x_2 = \frac{-(\theta_0 + \theta_1 x_1)}{\theta_2}$
+
+
+```{r}
+bound <- -1*(o$par[1] + 0:100 * o$par[2]) / o$par[3]
+plot(ex2data$exam1, ex2data$exam2, pch=ifelse(ex2data$admitted, 3, 19),
+     col=ifelse(ex2data$admitted, "black", "yellow"),
+     ylab="Exam2", xlab="Exam1")
+lines(0:100, bound, col="blue")
+legend("topright", legend=c("Admitted","Denied","Boundary"),
+        pch=c(3,19,NA),col=c("black","yellow","blue"), lty=c(NA,NA,1))
+```
+
+## Predict
+
+```{r}
+# test probability prediction
+prob <- plogis(c(1,45,85) %*% createColumnVec(o$par))
+stopifnot(abs(prob - 0.775) < 0.002)
+
+# test prediction accuracy
+preds <- ifelse(plogis(as.matrix(X) %*% createColumnVec(o$par)) > 0.5, 1, 0)
+
+trainAccuracy <- mean(ifelse(preds == ex2data$admitted, 1, 0))
+stopifnot(abs(trainAccuracy - 0.89) < 0.01)
+
+# create a confusion matrix
+#  rows are the prediction, columns are the truth
+confusionMatrix <- table(preds, ex2data$admitted)
+dimnames(confusionMatrix) <- list(predicted=0:1,
+                                  actual=0:1)
+confusionMatrix
+```
+
+## Logistic Regression
+
+```{r}
+lm1 <- glm(admitted ~ exam1 + exam2, data=ex2data, family=binomial(link="logit"))
+summary(lm1)
+
+preds_lm <- predict(lm1, type="response")
+
+confusionMatrix_lm <- table(preds, ex2data$admitted)
+dimnames(confusionMatrix) <- list(predicted=0:1,
+                                  actual=0:1)
+
+# confusion matrix
+confusionMatrix
+
+# coefficient comparison
+data.frame(method=c("Gradient Descent", "Regression"),
+           theta0=c(o$par[1], coef(lm1)[1]),
+           theta1=c(o$par[2], coef(lm1)[2]),
+           theta2=c(o$par[3], coef(lm1)[3]), row.names = NULL)
+```
+
+# Regularized Logistic Regression
+
+## Read in the Data
+
+```{r}
+ex2data2 <- read.table(file.path(dataPath, "ex2data2.txt"), header = FALSE,
+                      sep = ",")
+names(ex2data2) <- c("test1", "test2", "accept")
+print(ex2data2[1:5,])
+```
+
+## plot the data
+
+```{r}
+plot(ex2data2$test1, ex2data2$test2, pch=ifelse(ex2data2$accept, 3, 19),
+     col=ifelse(ex2data2$accept, "black", "yellow"),
+     ylab="Test2", xlab="Test1")
+legend("topright", legend=c("Accepted","Rejected"),
+        pch=c(3,19),col=c("black","yellow"))
+```
+
+## Expand the polynomial dataset
+
+```{r}
+expandModelMatrixAndBindOnes <- function(X, degree)
+{
+  # Note the i=0, j=0 gives the ones
+  Y <- matrix(0, nrow=nrow(X), ncol=(degree+1)^2)
+  nam <- character((degree+1)^2)
+  col <- 1
+  for (i in 0:degree)
+  {
+    for (j in 0:degree)
+    {
+      Y[,col] <- X[,1]^i*X[,2]^j
+      nam[col]<- paste0("X1^",i,"_X2^",j)
+      col <- col + 1
+    }
+  }
+  colnames(Y) <- nam
+  return(Y)
+}
+
+Xexpanded <- expandModelMatrixAndBindOnes(ex2data2[,1:2], 6)
+y <- createColumnVec(ex2data2$accept)
+
+o <- optim(rep(1, ncol(Xexpanded)), 
+           optimComputeCost, gr=optimCostGradient,
+           X=Xexpanded, y=y, method="BFGS",
+          control = list(maxit=8000))
+
+stopifnot(o$convergence == 0)
+
+# likely overfitting
+o$par
+```
+
+## Regularization
+
+```{r}
+optimComputeCostRegularization <- function(theta, X, y, lambda)
+{
+  m <- length(y)
+  theta <- matrix(theta, nrow=ncol(X))
+  temp <- X %*% theta
+  log_h_theta <- plogis(temp, log.p = TRUE)
+  log_1_minus_h_theta <- log(1-plogis(temp))
+  # for regularization, theta_0 is not used, so set it to zero
+  theta[1] <- 0
+  J <- 1 / m * sum(-1*y*log_h_theta - (1-y)*log_1_minus_h_theta) + 
+    lambda / 2 / m * sum(theta^2)
+  J <- ifelse(is.na(J), .Machine$double.xmax, J)
+  return(J)
+}
+
+optimCostGradientRegularization <- function(theta, X, y, lambda)
+{
+  m <- length(y)
+  theta <- matrix(theta, nrow=ncol(X))
+  temp <- X %*% theta
+  # for regularization, theta_0 is not used, so set it to zero
+  theta[1] <- 0
+  dJ <- 1 / m * t(X) %*% (plogis(temp) - y) + lambda / m * theta
+  return(dJ)
+}
+
+stopifnot(abs(optimComputeCostRegularization(rep(0, ncol(Xexpanded)),
+                                             Xexpanded, y, 1) - 0.693) < 0.001)
+
+stopifnot(all(abs(optimCostGradientRegularization(rep(0, ncol(Xexpanded)),
+                                              Xexpanded, y, 1)[c(1,8,2,15,9)] - 
+                  c(0.0085, 0.0188, 0.0001, 0.0503, 0.0115)) < 0.001))
+
+o2 <- optim(rep(1, ncol(Xexpanded)), optimComputeCostRegularization, 
+           gr=optimCostGradientRegularization,
+           X=Xexpanded, y=y, lambda=1, method="BFGS")
+
+stopifnot(o$convergence == 0)
+
+# regularized parameters
+o2$par
+```
+
+## Plot the boundary
+
+```{r}
+test_grid <- expand.grid(test1=seq(-1,1,length=20), test2=seq(-1, 1, length=20))
+
+test_grid_expanded <- expandModelMatrixAndBindOnes(test_grid, 6)
+
+test_y <- plogis(test_grid_expanded %*% createColumnVec(o2$par))
+
+contour(x=seq(-1,1,length=20), y=seq(-1, 1, length=20), 
+        z=matrix(test_y, nrow=20, ncol=20), levels=0.5,
+        ylab="Test2", xlab="Test1", main="Lambda=1")
+points(ex2data2$test1, ex2data2$test2, pch=ifelse(ex2data2$accept, 3, 19),
+     col=ifelse(ex2data2$accept, "black", "yellow"))
+legend("topright", legend=c("Accepted","Rejected"),
+        pch=c(3,19),col=c("black","yellow"))
+
+
+```
+
+## Other Lambda settings
+
+```{r}
+o2 <- optim(rep(1, ncol(Xexpanded)), optimComputeCostRegularization, 
+           gr=optimCostGradientRegularization,
+           X=Xexpanded, y=y, lambda=0, method="BFGS")
+
+test_y <- plogis(test_grid_expanded %*% createColumnVec(o2$par))
+
+contour(x=seq(-1,1,length=20), y=seq(-1, 1, length=20), 
+        z=matrix(test_y, nrow=20, ncol=20), levels=0.5,
+        ylab="Test2", xlab="Test1", main="Lambda=0")
+points(ex2data2$test1, ex2data2$test2, pch=ifelse(ex2data2$accept, 3, 19),
+     col=ifelse(ex2data2$accept, "black", "yellow"))
+legend("topright", legend=c("Accepted","Rejected"),
+        pch=c(3,19),col=c("black","yellow"))
+
+o2 <- optim(rep(1, ncol(Xexpanded)), optimComputeCostRegularization, 
+           gr=optimCostGradientRegularization,
+           X=Xexpanded, y=y, lambda=100, method="BFGS")
+
+test_y <- plogis(test_grid_expanded %*% createColumnVec(o2$par))
+
+contour(x=seq(-1,1,length=20), y=seq(-1, 1, length=20), 
+        z=matrix(test_y, nrow=20, ncol=20), levels=0.5,
+        ylab="Test2", xlab="Test1", main="Lambda=100")
+points(ex2data2$test1, ex2data2$test2, pch=ifelse(ex2data2$accept, 3, 19),
+     col=ifelse(ex2data2$accept, "black", "yellow"))
+legend("topright", legend=c("Accepted","Rejected"),
+        pch=c(3,19),col=c("black","yellow"))
+```
+
+## Penalized Logistic Regression
+
+```{r}
+Xexpanded <- expandModelMatrixAndBindOnes(ex2data2[,1:2], 6)
+y <- createColumnVec(ex2data2$accept)
+
+# alpha = 0 indicates the Ridge Regression procedure which is very close to the regularization used in the class
+# glmnet adds its own intercept
+set.seed(200)
+ridge1 <- glmnet(x=Xexpanded[,-1], y=y, family="binomial", alpha=0)
+# first 10 coefficients
+as.matrix(coef(ridge1, s=0.01))[1:10,]
+
+# alpha = 1 indicates the Lasso procedure
+# lasso adds its own intercept
+set.seed(100)
+lasso1 <- glmnet(x=Xexpanded[,-1], y=y, family="binomial", alpha=1)
+# in the lasso, some coefficients are zero depending on the lambda parameter
+#  the lasso lambda is different from the regularized regression lambda
+# First 10 coefficients
+as.matrix(coef(lasso1, s=0.01))[1:10,]
+
+# the lasso and ridge procedures also allow the user to pick the "best" lambda
+#   using cross-validation.  Typically the lambda chosen is the one
+#   that produces an error within 1 standard deviation of the minimum error.
+#   The literature shows that the minimum is overfitting.  
+#   a little off the minimum is robust.
+
+set.seed(2000)
+ridge2 <- cv.glmnet(x=Xexpanded[,-1], y=y, family="binomial", 
+                    alpha=0, nlambda=100)
+# chosen lambda
+log(ridge2$lambda.1se)
+plot(ridge2)
+
+preds_ridge_cv <- predict(ridge2, newx=Xexpanded[,-1], 
+                          type="class", s="lambda.1se")
+
+confusionMatrix_ridge_cv <- table(preds_ridge_cv, c(y))
+dimnames(confusionMatrix_ridge_cv) <- list(predicted=0:1,
+                                  actual=0:1)
+
+# confusion matrix
+confusionMatrix_ridge_cv
+
+set.seed(1976)
+lasso2 <- cv.glmnet(x=Xexpanded[,-1], y=y, family="binomial", alpha=1, nlambda=50)
+# chosen lambda
+log(lasso2$lambda.1se)
+plot(lasso2)
+
+preds_lasso_cv <- predict(lasso2, newx=Xexpanded[,-1], 
+                          type="class", s="lambda.1se")
+
+confusionMatrix_lasso_cv <- table(preds_lasso_cv, c(y))
+dimnames(confusionMatrix_lasso_cv) <- list(predicted=0:1,
+                                  actual=0:1)
+
+# confusion matrix
+confusionMatrix_lasso_cv
+
+o2 <- optim(rep(1, ncol(Xexpanded)), optimComputeCostRegularization, 
+           gr=optimCostGradientRegularization,
+           X=Xexpanded, y=y, lambda=1, method="BFGS")
+
+stopifnot(o$convergence == 0)
+
+# coefficient comparison
+data.frame(Gradient_Descent=o2$par, 
+           ridge_cv=c(as.matrix(coef(ridge2, s="lambda.1se"))),
+           lasso_CV=c(as.matrix(coef(lasso2, s="lambda.1se"))))
+```
+
+```{r}
+test_grid <- expand.grid(test1=seq(-1,1,length=20), test2=seq(-1, 1, length=20))
+
+test_grid_expanded <- expandModelMatrixAndBindOnes(test_grid, 6)
+
+test_y <- predict(lasso2, newx=test_grid_expanded[,-1], 
+                          type="response", s="lambda.1se")
+
+contour(x=seq(-1,1,length=20), y=seq(-1, 1, length=20), 
+        z=matrix(test_y, nrow=20, ncol=20), levels=0.5,
+        ylab="Test2", xlab="Test1", 
+        main=paste("Lasso Lambda=", round(lasso2$lambda.1se, 5)))
+points(ex2data2$test1, ex2data2$test2, pch=ifelse(ex2data2$accept, 3, 19),
+     col=ifelse(ex2data2$accept, "black", "yellow"))
+legend("topright", legend=c("Accepted","Rejected"),
+        pch=c(3,19),col=c("black","yellow"))
+```

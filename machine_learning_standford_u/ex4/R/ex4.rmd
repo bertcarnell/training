@@ -1,0 +1,357 @@
+---
+title: "Coursera Machine Learning Exercise 4"
+author: "Rob Carnell"
+date: "January 31, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+# plotting
+require(R.matlab)
+require(ggplot2)
+require(compiler)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "hb82795")
+{
+  repositoryPath <- file.path("C:", "developer","repositories","DataAnalyticsTeam")
+}
+stopifnot(file.exists(repositoryPath))
+
+dataPath <- file.path(repositoryPath, "Training", "Coursera_Machine_Learning", 
+                      "machine-learning-ex4", "data")
+```
+
+# Neural Network
+
+## Read in the Data
+
+```{r}
+ex4data <- readMat(file.path(dataPath, "ex4data1.mat"))
+ex4weights <- readMat(file.path(dataPath, "ex4weights.mat"))
+```
+
+## Plot the numerals
+
+```{r}
+set.seed(1976)
+df1 <- data.frame(x=rep(seq(0.5,19.5), each=20), y=rep(seq(-0.5,-19.5), times=20), 
+                  grouprow=rep(1:10, each=400, times=10),
+                  groupcol=rep(1:10, each=4000), 
+                  value=c(t(ex4data$X[sample(1:5000, 100),])))
+g1 <- ggplot(df1, aes(x =x, y = y, fill = value)) + 
+  geom_raster() + facet_grid(grouprow ~ groupcol) +
+  scale_fill_continuous(high = "white", low = "black", guide = "none") +
+  theme_bw(base_size = 14) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        strip.background = element_blank(),
+        strip.text.x = element_blank(),
+        strip.text.y = element_blank())
+plot(g1)
+
+```
+
+## Predict
+
+```{r}
+bindOnes <- function(X)
+{
+  m <- nrow(X)
+  return(matrix(c(rep(1,m), X), nrow=m))
+}
+stopifnot(all(c(bindOnes(matrix(c(1,2,3,4,5,6),nrow=3))) == c(1,1,1,1,2,3,4,5,6)))
+
+createColumnVec <- function(z)
+{
+  return(matrix(z, ncol=1))
+}
+
+predictNeuralNetwork <- function(theta1, theta2, X)
+{
+  X <- bindOnes(X)
+  # m x n+1 * (25 x n+1)' 
+  z2 <- X %*% t(theta1)
+  # m x 25
+  a2 <- plogis(z2);
+  # m x 25+1
+  a2 <- bindOnes(a2)
+  # m x 25+1 * (10 x 26)'
+  z3 <- a2 %*% t(theta2)
+  a3 <- plogis(z3)
+  probs <- a3
+  classes <- apply(a3, 1, which.max)
+  return(list(probs=probs, classes=classes))
+}
+
+sigmoidGradient <- function(z)
+{
+  plogis(z) * (1 - plogis(z))
+}
+
+getTheta12 <- function(nn_params, input_layer_size, hidden_layer_size,
+                           num_labels)
+{
+  temp <- (hidden_layer_size*(input_layer_size + 1))
+  Theta1 <- matrix(nn_params[1:temp], nrow = hidden_layer_size, ncol = input_layer_size+1)
+  Theta2 <- matrix(nn_params[(temp+1):length(nn_params)], nrow = num_labels, ncol = (hidden_layer_size + 1))
+  return(list(Theta1 = Theta1, Theta2 = Theta2))
+}
+cGetTheta12 <- cmpfun(getTheta12, options=list(compile=3))
+
+nnCostFunction <- function(nn_params, input_layer_size, hidden_layer_size,
+                           num_labels, X, y, lambda)
+{
+  temp <- cGetTheta12(nn_params, input_layer_size, hidden_layer_size, num_labels)
+  Theta1 <- temp$Theta1
+  Theta2 <- temp$Theta2
+  m <- nrow(X)  
+
+  # m is about 5000
+  # n is 400
+  # s is 25
+  # k is 10
+
+  # Feed forward
+  X <- bindOnes(X)
+  # m x s = m x n+1 * (s x n+1)' 
+  z2 <- X %*% t(Theta1)
+  # m x s
+  a2 <- plogis(z2);
+  # m x s+1
+  a2 <- bindOnes(a2)
+  # m x s+1 * (k x s+1)'
+  z3 <- a2 %*% t(Theta2)
+  # m X k
+  htheta <- plogis(z3)
+  log_htheta <- log(htheta)
+  log_1_m_htheta <- log(1 - htheta)
+  # m x k
+  Y <- matrix(0, nrow = m, ncol = num_labels)
+  for (i in 1:num_labels)
+  {
+    Y[y == i, i] <- 1
+  }
+  # m x k
+  partial <- ( -1 * Y * log_htheta - (1-Y) * log_1_m_htheta)
+  # 1 x 1 
+  J <- 1 / m * sum(partial)
+  
+  # regularization
+  temp_theta1 <- Theta1
+  temp_theta1[,1] <- 0
+  temp_theta2 <- Theta2
+  temp_theta2[,1] <- 0
+  # (s x n+1) .* (s x n+1) AND  (s+1 x k) *. (s+1 x k)
+  J <- J + lambda / 2 / m * (sum(temp_theta1^2) + sum(temp_theta2^2))
+  
+  return(J)
+}
+
+cNnCostFunction <- cmpfun(nnCostFunction, options=list(compile=3))
+
+nnCostFunctionGradient <- function(nn_params, input_layer_size, hidden_layer_size,
+                           num_labels, X, y, lambda)
+{
+  temp <- cGetTheta12(nn_params, input_layer_size, hidden_layer_size, num_labels)
+  Theta1 <- temp$Theta1
+  Theta2 <- temp$Theta2
+  m <- nrow(X)  
+
+  # m is about 5000
+  # n is 400
+  # s is 25
+  # k is 10
+
+  # Feed forward
+  X <- bindOnes(X)
+  # m x s = m x n+1 * (s x n+1)' 
+  z2 <- X %*% t(Theta1)
+  # m x s
+  a2 <- plogis(z2);
+  # m x s+1
+  a2 <- bindOnes(a2)
+  # m x s+1 * (k x s+1)'
+  z3 <- a2 %*% t(Theta2)
+  # m X k
+  htheta <- plogis(z3)
+  # m x k
+  Y <- matrix(0, nrow=m, ncol=num_labels)
+  for (i in 1:num_labels)
+  {
+    Y[y == i, i] <- 1
+  }
+
+  # regularization
+  temp_theta1 <- Theta1
+  temp_theta1[,1] <- 0
+  temp_theta2 <- Theta2
+  temp_theta2[,1] <- 0
+
+  # back propagation
+  # Step 1 - complete above
+
+  # Step 2
+  # m x k
+  d3 <- htheta - Y
+
+  # step 3
+  # m x s+1 = (m x k) * (k x s+1) .* (m x s+1)
+  d2 <- (d3 %*% Theta2) * bindOnes(sigmoidGradient(z2))
+
+  # step 4
+  d2 = d2[,-1]
+  # s x n+1 = (m x s)' * (m x n+1) + (s x n+1)
+  Theta1_grad <- (1 / m) * (t(d2) %*% X) + (lambda / m) * temp_theta1
+
+  # k x s+1 = (m x k)' * (m x s+1) + (k x s+1)
+  Theta2_grad <- (1 / m) * (t(d3) %*% a2) + (lambda / m) * temp_theta2
+  
+  grad <- c(Theta1_grad, Theta2_grad)
+  
+  return(grad)
+}
+
+cNnCostFunctionGradient <- cmpfun(nnCostFunctionGradient, options=list(compile=3))
+
+randInitializeWeights <- function(L_in, L_out)
+{
+  epsilon_init <- sqrt(6) / sqrt(L_in + L_out)
+  W <- matrix(runif(L_out*(1 + L_in)), nrow=L_out, ncol=1+L_in) * 2 * epsilon_init - epsilon_init
+  return(W)
+}
+
+```
+
+
+## Check Functions
+
+```{r}
+input_layer_size <- 400
+hidden_layer_size <- 25
+num_labels <- 10
+
+nn_params <- c(ex4weights$Theta1, ex4weights$Theta2)
+
+X <- as.matrix(ex4data$X)
+y <- createColumnVec(ex4data$y)
+
+lambda <- 0
+
+J <- nnCostFunction(nn_params, input_layer_size, hidden_layer_size, num_labels, 
+                    X, y, lambda)
+
+stopifnot(abs(J - 0.287629) < 1E-5)
+
+J <- cNnCostFunction(nn_params, input_layer_size, hidden_layer_size, num_labels, 
+                    X, y, lambda)
+
+stopifnot(abs(J - 0.287629) < 1E-5)
+
+lambda <- 1
+
+J <- nnCostFunction(nn_params, input_layer_size, hidden_layer_size, num_labels, 
+                    X, y, lambda)
+
+stopifnot(abs(J - 0.383770) < 1E-5)
+
+J <- cNnCostFunction(nn_params, input_layer_size, hidden_layer_size, num_labels, 
+                    X, y, lambda)
+
+stopifnot(abs(J - 0.383770) < 1E-5)
+
+stopifnot(all(abs(sigmoidGradient(c(-1, -0.5, 0, 0.5, 1)) -
+                    c(0.196611, 0.235003, 0.25, 0.235003, 0.196611)) < 1E-5))
+
+```
+
+## Train Network
+
+```{r}
+
+set.seed(1976)
+initial_Theta1 <- randInitializeWeights(input_layer_size, hidden_layer_size)
+initial_Theta2 <- randInitializeWeights(hidden_layer_size, num_labels)
+initial_nn_params <- c(initial_Theta1, initial_Theta2)
+
+# use method CG for the case with many parameters
+o1 <- optim(initial_nn_params, fn=cNnCostFunction, gr=cNnCostFunctionGradient,
+            input_layer_size = input_layer_size, 
+            hidden_layer_size = hidden_layer_size, 
+            num_labels = num_labels, 
+            X = X, y = y, lambda = lambda,
+            method = "CG", control = list(maxit = 1000, reltol = 1E-6))
+
+temp <- cGetTheta12(o1$par, input_layer_size, hidden_layer_size, num_labels)
+
+res <- predictNeuralNetwork(as.matrix(temp$Theta1), 
+                           as.matrix(temp$Theta2), 
+                           as.matrix(X))
+
+confusionMatrix <- table(res$classes, y)
+dimnames(confusionMatrix) <- list(predicted=1:10,
+                                 actual=1:10)
+confusionMatrix
+
+accuracy <- mean(ifelse(res$classes == y, 1, 0))
+ 
+stopifnot(accuracy > 0.953)
+
+```
+
+## Visualize Theta1
+
+```{r}
+df1 <- data.frame(x=rep(seq(0.5,19.5), each=20), y=rep(seq(-0.5,-19.5), times=20), 
+                  grouprow=rep(1:5, each=400, times=5),
+                  groupcol=rep(1:5, each=2000), 
+                  value=c(t(temp$Theta1[,-1])))
+g1 <- ggplot(df1, aes(x =x, y = y, fill = value)) + 
+  geom_raster() + facet_grid(grouprow ~ groupcol) +
+  scale_fill_continuous(high = "white", low = "black", guide = "none") +
+  theme_bw(base_size = 14) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        strip.background = element_blank(),
+        strip.text.x = element_blank(),
+        strip.text.y = element_blank())
+plot(g1)
+```
+
+# NeuralNet Package Test
+
+```{r}
+# require(neuralnet)
+# dfnn1 <- as.data.frame(ex4data$X)
+# names(dfnn1) <- paste0("x",1:400)
+# for (i in 1:10)
+# {
+#   eval(parse(text=paste0("dfnn1$y",i," <- ifelse(ex4data$y == i, 1, 0)")))
+# }
+# string_to_eval <- paste0("nn1 <- neuralnet(",paste0(paste0("y",1:10), collapse="+")," ~ ", 
+#                          paste0(paste0("x",1:25), collapse="+"),", data = dfnn1, hidden =25)")
+# eval(parse(text=string_to_eval))
+
+```
+
+# nnet Package Test
+
+```{r}
+require(nnet)
+dfnnet <- as.data.frame(ex4data$X)
+dfnnet$y <- factor(ex4data$y, levels = c(1:10))
+# 15 units instead of 25 in the hidden layer
+# decay is the regularization parameter which MASS suggests is 1E-4 to 1E-2
+# MaxNWts is the maximum number of weights in Theta
+nnet1 <- nnet(y ~ ., data=dfnnet, size=15, trace=FALSE, maxit = 200, decay=1E-4, MaxNWts=10000)
+table(dfnnet$y, factor(predict(nnet1, newdata=dfnnet, type="class"), levels=as.character(c(1:10))))
+```

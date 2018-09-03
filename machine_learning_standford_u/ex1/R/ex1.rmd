@@ -1,0 +1,334 @@
+---
+title: "Coursera Machine Learning Exercise 1"
+author: "Rob Carnell"
+date: "January 22, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+require(ggplot2)
+require(scales)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "hb82795")
+{
+  repositoryPath <- file.path("C:", "developer","repositories","DataAnalyticsTeam")
+}
+stopifnot(file.exists(repositoryPath))
+
+dataPath <- file.path(repositoryPath, "Training", "Coursera_Machine_Learning", 
+                      "machine-learning-ex1", "data")
+```
+
+# Single Variable Data
+
+## Read in the Data
+
+```{r}
+ex1data <- read.table(file.path(dataPath, "ex1data1.txt"), header = FALSE,
+                      sep = ",")
+names(ex1data) <- c("pop", "profit")
+print(ex1data[1:5,])
+```
+
+## Plot the Data
+
+```{r}
+plot(ex1data$pop, ex1data$profit, pch=4, col="red",
+     ylab="Profit in $10,000s", xlab="Population of City in 10,000s")
+```
+
+## Equations
+
+```{r}
+# X must be m x n, observations x parameters
+bindOnes <- function(X)
+{
+  m <- nrow(X)
+  return(matrix(c(rep(1,m), X), nrow=m))
+}
+stopifnot(all(c(bindOnes(matrix(c(1,2,3,4,5,6),nrow=3))) == c(1,1,1,1,2,3,4,5,6)))
+
+createColumnVec <- function(z)
+{
+  return(matrix(z, ncol=1))
+}
+
+# X is m x n+1
+# y is m x 1
+# theta is n+1 x 1
+computeCost <- function(X, y, theta)
+{
+  m <- length(y)
+  # ( (m x n) * (n x 1) - (m x 1) )
+  J <- 1 / 2 / m * t(X %*% theta - y) %*% (X %*% theta - y)
+  return(J)
+}
+
+gradientDescent <- function(X, y, theta, alpha, num_iters)
+{
+  m <- length(y)
+  J_history <- rep(0, num_iters)
+  X <- as.matrix(X)
+  for (iter in 1:num_iters)
+  {
+    theta <- theta - alpha / m * t(X) %*% (X %*% theta - y)
+    J_history[iter] <- computeCost(X, y, theta);
+  }
+  return(list(theta=theta, J_history=J_history))
+}
+
+```
+
+## Test the Equations (Unit Tests)
+
+```{r}
+X <- bindOnes(createColumnVec(ex1data$pop))
+y <- createColumnVec(ex1data$profit)
+alpha <- 0.01
+n_iter <- 1500
+
+stopifnot(abs(computeCost(X, y, createColumnVec(c(0,0))) - 32.07) < 0.01)
+stopifnot(abs(computeCost(X, y, createColumnVec(c(-1,2))) - 54.24) < 0.01)
+
+res <- gradientDescent(X, y, createColumnVec(c(-1,2)), alpha, n_iter)
+stopifnot(abs(res$theta[1,1] - (-3.6303)) < 0.5)
+stopifnot(abs(res$theta[2,1] - 1.1664) < 0.3)
+```
+
+## Plot the Optimization Path
+
+```{r}
+plot(1:n_iter, res$J_history, pch=19, type="l", xlab="Iteration", ylab="Cost",
+     main=paste("Cost by Iteration for alpha=", alpha))
+```
+
+## Plot the fit
+
+```{r}
+pred_y <- X %*% res$theta
+
+plot(ex1data$pop, ex1data$profit, pch=4, col="red",
+     ylab="Profit in $10,000s", xlab="Population of City in 10,000s",
+     main="Base Graphics")
+lines(ex1data$pop, pred_y, col="black")
+
+ggplot(ex1data, aes(x=pop, y=profit)) + geom_point(shape=4, color="red") + 
+  geom_line(data=cbind(ex1data, pred_y), aes(x=pop, y=pred_y)) + 
+  xlab("Population of City in 10,000s") +
+  ylab("Profit in $10,000s") + ggtitle("ggplot2 graphics") +
+  theme_bw() + scale_y_continuous(labels=dollar)
+
+```
+
+## 3-D Plots of Cost
+
+```{r}
+grid_size <- 100
+theta0_vals <- seq(-10, 10, length=grid_size)
+theta1_vals <- seq(-1, 4, length=grid_size)
+J_vals <- matrix(0, nrow=grid_size, ncol=grid_size)
+
+for (i in 1:grid_size)
+{
+  for (j in 1:grid_size)
+  {
+    J_vals[i,j] <- computeCost(X, y, createColumnVec(c(theta0_vals[i], theta1_vals[j])))
+  }
+}
+
+persp(x = theta0_vals, y = theta1_vals, z = J_vals,
+        xlab="Theta0", ylab="Theta1", zlab="Costs",
+      col="green", main="Base Graphics")
+
+contour(x = theta0_vals, y = theta1_vals, z = J_vals,
+        xlab="Theta0", ylab="Theta1", levels=10^seq(-2,3,length=20),
+        labels=round(10^seq(-2,3,length=20), 2),
+        main="Base Graphics")
+points(res$theta[1,1], res$theta[2,1], pch=4, col="red", cex=3)
+
+plot_data <- data.frame(theta0_vals=rep(theta0_vals, times=grid_size), 
+                        theta1_vals=rep(theta1_vals, each=grid_size),
+                        J_vals=c(J_vals))
+point_data <- data.frame(x=res$theta[1,1], y=res$theta[2,1])
+ggplot(data=plot_data, aes(x=theta0_vals, y=theta1_vals, z=J_vals)) + 
+  geom_contour(breaks=10^seq(-2,3,length=20)) +
+  xlab("Theta0") + ylab("Theta1") + theme_bw() + ggtitle("ggplot2 graphics") +
+  geom_point(data=point_data, aes(x=x, y=y), col="red", size=5, 
+             shape=4, inherit.aes=FALSE)
+
+```
+
+# Multivariable Data
+
+## Read in the Data
+
+```{r}
+ex2data <- read.table(file.path(dataPath, "ex1data2.txt"), header = FALSE,
+                      sep = ",")
+names(ex2data) <- c("SqFt", "Bedrooms", "Price")
+print(ex2data[1:5,])
+```
+
+## Plot the Data
+
+```{r}
+pairs(ex2data)
+
+boxplot(ex2data)
+
+```
+
+## Feature Normalization
+
+```{r}
+featureNormalize <- function(X, na.rm=TRUE)
+{
+  #X <- ex2data[,1:2]
+  #na.rm=TRUE
+  # X is m x n
+  mu <- apply(X, 2, mean, na.rm=na.rm)
+  mu_matrix <- matrix(mu, nrow=nrow(X), ncol=ncol(X), byrow=TRUE)
+  sigma <- apply(X, 2, sd, na.rm=na.rm)
+  sigma_matrix <- matrix(sigma, nrow=nrow(X), ncol=ncol(X), byrow=TRUE)
+  X_norm <- (X - mu_matrix) / sigma_matrix
+  return(list(mu=mu, sigma=sigma, X_norm=X_norm))
+}
+
+featureNormalizePoint <- function(x, mu, sigma)
+{
+  stopifnot(length(x) == length(mu))
+  stopifnot(length(x) == length(sigma))
+  (x - mu) / sigma
+}
+```
+
+## Analysis
+
+```{r}
+X_norm_list <- featureNormalize(as.matrix(ex2data[,1:2]))
+X <- bindOnes(X_norm_list$X_norm)
+boxplot(X)
+
+y <- createColumnVec(ex2data$Price)
+alpha <- 0.01
+n_iter <- 400
+
+res <- gradientDescent(X, y, createColumnVec(c(3,1,1)), alpha, n_iter)
+```
+
+## Plot the Optimization Path
+
+```{r}
+plot(1:n_iter, res$J_history, pch=19, type="l", xlab="Iteration", ylab="Cost",
+     main="Cost by Iteration for multiple alpha's")
+res3 <- gradientDescent(X, y, cbind(c(3,1,1)), alpha*2, n_iter)
+lines(1:n_iter, res3$J_history, col="blue")
+res33 <- gradientDescent(X, y, cbind(c(3,1,1)), alpha*10, n_iter)
+lines(1:n_iter, res33$J_history, col="red")
+res333 <- gradientDescent(X, y, cbind(c(3,1,1)), alpha/2, n_iter)
+lines(1:n_iter, res333$J_history, col="green")
+legend("topright", legend = c(alpha, alpha*2, alpha*10, alpha/2), 
+       col=c("black", "blue","red","green"), lwd=2, pch=NA)
+
+```
+
+## Estimate Price using alpha=0.1
+
+```{r}
+test_bedrooms <- 3
+test_sqft <- 1650
+
+pred_y <- c(1, featureNormalizePoint(c(test_sqft, test_bedrooms), 
+                                     X_norm_list$mu, X_norm_list$sigma)
+            ) %*% res33$theta
+
+plot(ex2data$SqFt, ex2data$Price, col="red", pch=4,
+     xlab="Square Feet", ylab="Price")
+points(test_sqft, pred_y, col="blue", pch=19)
+
+plot(ex2data$Bedrooms, ex2data$Price, col="red", pch=4,
+     xlab="Bedrooms", ylab="Price")
+points(test_bedrooms, pred_y, col="blue", pch=19)
+
+```
+
+# Normal Equation Estimates
+
+```{r}
+normalEquation <- function(X, y)
+{
+  return(solve(t(X) %*% X) %*% t(X) %*% y)
+}
+
+```
+
+## Univariate
+
+```{r}
+# Normal equation
+X <- bindOnes(createColumnVec(ex1data$pop))
+y <- createColumnVec(ex1data$profit)
+theta_normal <- normalEquation(X, y)
+
+# gradient descent
+alpha <- 0.01
+n_iter <- 1500
+res <- gradientDescent(X, y, createColumnVec(c(-1,2)), alpha, n_iter)
+
+# linear model
+lm1 <- lm(profit ~ pop, data=ex1data)
+
+# result
+data.frame(type=c("Normal Equation", "Gradient Descent", "Linear Regression"),
+           theta0=c(theta_normal[1,1], res$theta[1,1], coef(lm1)[1]),
+           theta1=c(theta_normal[2,1], res$theta[2,1], coef(lm1)[2]))
+
+```
+
+## Multivariate
+
+$y=\beta_0 + \beta_1 X_1 + \beta_2 X_2$
+
+$y=\gamma_0 + \gamma_1 \frac{X_1 - \mu_1}{\sigma_1} + \gamma_2 \frac{X_2 - \mu_2}{\sigma_2}$
+
+$\beta_0 = \gamma_0 - \frac{\gamma_1 \mu_1}{\sigma_1} - \frac{\gamma_2 \mu_2}{\sigma_2}$
+
+$\beta_1 = \gamma_1 / \sigma_1$
+
+$\beta_2 = \gamma_2 / \sigma_2$
+
+```{r}
+# normal equation
+X <- bindOnes(as.matrix(ex2data[,1:2]))
+y <- createColumnVec(ex2data$Price)
+theta_normal <- normalEquation(X, y)
+
+# gradient descent with feature normalization
+X_norm_list <- featureNormalize(as.matrix(ex2data[,1:2]))
+X <- bindOnes(X_norm_list$X_norm)
+y <- createColumnVec(ex2data$Price)
+alpha <- 0.1
+n_iter <- 400
+res <- gradientDescent(X, y, createColumnVec(c(3,1,1)), alpha, n_iter)
+
+# linear model
+lm2 <- lm(Price ~ SqFt + Bedrooms, data=ex2data)
+
+# results
+data.frame(type=c("Normal Equation", "Gradient Descent", "Linear Regression"),
+           theta0=c(theta_normal[1,1], 
+                    res$theta[1,1] - 
+                    res$theta[2,1]*X_norm_list$mu[1]/X_norm_list$sigma[1] -
+                    res$theta[3,1]*X_norm_list$mu[2]/X_norm_list$sigma[2],
+                    coef(lm2)[1]),
+           theta1=c(theta_normal[2,1], 
+                    res$theta[2,1]/X_norm_list$sigma[1], 
+                    coef(lm2)[2]),
+           theta2=c(theta_normal[3,1], 
+                    res$theta[3,1]/X_norm_list$sigma[2], 
+                    coef(lm2)[3]))
+```
+
+

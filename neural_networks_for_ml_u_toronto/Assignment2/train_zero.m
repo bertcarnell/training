@@ -1,5 +1,5 @@
 % This function trains a neural network language model.
-function [model] = train(epochs)
+function [model] = train_zero(epochs)
 % Inputs:
 %   epochs: Number of epochs to run.
 % Output:
@@ -16,7 +16,7 @@ end
 
 % SET HYPERPARAMETERS HERE.
 batchsize = 100;  % Mini-batch size.
-learning_rate = 0.1;  % Learning rate; default = 0.1.
+learning_rate = 0.0001;  % Learning rate; default = 0.1.
 momentum = 0.9;  % Momentum; default = 0.9.
 numhid1 = 50;  % Dimensionality of embedding space; default = 50.
 numhid2 = 200;  % Number of units in hidden layer; default = 200.
@@ -34,9 +34,9 @@ show_validation_CE_after = 1000;
 vocab_size = size(vocab, 2);
 
 % INITIALIZE WEIGHTS AND BIASES.
-word_embedding_weights = init_wt * randn(vocab_size, numhid1);
-embed_to_hid_weights = init_wt * randn(numwords * numhid1, numhid2);
-hid_to_output_weights = init_wt * randn(numhid2, vocab_size);
+word_embedding_weights = init_wt * zeros(vocab_size, numhid1);
+embed_to_hid_weights = init_wt * zeros(numwords * numhid1, numhid2);
+hid_to_output_weights = init_wt * zeros(numhid2, vocab_size);
 hid_bias = zeros(numhid2, 1);
 output_bias = zeros(vocab_size, 1);
 
@@ -134,31 +134,11 @@ for epoch = 1:epochs
     end
     
     % UPDATE WEIGHTS AND BIASES.
-    word_embedding_weights_delta = ...
-      momentum .* word_embedding_weights_delta + ...
-      word_embedding_weights_gradient ./ batchsize;
-    word_embedding_weights = word_embedding_weights...
-      - learning_rate * word_embedding_weights_delta;
-
-    embed_to_hid_weights_delta = ...
-      momentum .* embed_to_hid_weights_delta + ...
-      embed_to_hid_weights_gradient ./ batchsize;
-    embed_to_hid_weights = embed_to_hid_weights...
-      - learning_rate * embed_to_hid_weights_delta;
-
-    hid_to_output_weights_delta = ...
-      momentum .* hid_to_output_weights_delta + ...
-      hid_to_output_weights_gradient ./ batchsize;
-    hid_to_output_weights = hid_to_output_weights...
-      - learning_rate * hid_to_output_weights_delta;
-
-    hid_bias_delta = momentum .* hid_bias_delta + ...
-      hid_bias_gradient ./ batchsize;
-    hid_bias = hid_bias - learning_rate * hid_bias_delta;
-
-    output_bias_delta = momentum .* output_bias_delta + ...
-      output_bias_gradient ./ batchsize;
-    output_bias = output_bias - learning_rate * output_bias_delta;
+    word_embedding_weights = init_wt * zeros(vocab_size, numhid1);
+    embed_to_hid_weights = init_wt * zeros(numwords * numhid1, numhid2);
+    hid_to_output_weights = init_wt * zeros(numhid2, vocab_size);
+    hid_bias = zeros(numhid2, 1);
+    output_bias = zeros(vocab_size, 1);
 
     % VALIDATE.
     if mod(m, show_validation_CE_after) == 0

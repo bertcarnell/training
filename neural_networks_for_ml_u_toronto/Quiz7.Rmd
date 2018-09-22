@@ -1,0 +1,117 @@
+---
+title: "Quiz for Lesson 7"
+author: "Rob Carnell"
+date: "September 22, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+require(assertthat)
+```
+
+## Question 3
+
+```{r}
+f <- function(x, ytarget, wxh, why, whh, hbias, ybias)
+{
+  len <- length(x)
+  assertthat::assert_that(length(ytarget) == len)
+  
+  z <- numeric(len)
+  h <- numeric(len)
+  z[0+1] <- hbias + x[0+1]*wxh
+  h[0+1] <- plogis(z[0+1])
+  for (i in 2:len)
+  {
+    z[i] <- hbias + x[i]*wxh + h[i-1]*whh
+    h[i] <- plogis(z[i])
+  }
+  y <- ybias + why*h
+  E <- 0.5*(ytarget-y)^2
+  Etotal <- sum(E)
+  return(list(x=x,z=z,h=h,y=y,ytarget=ytarget,E=E, Etotal=Etotal,
+              wxh=wxh, why=why, whh=whh, hbias=hbias, ybias=ybias))
+}
+
+res <- f(c(9,4,-2),c(0,0,0),0.5,-0.7,-1,-1,0)
+res$h[3]
+```
+
+## Question 4
+
+```{r}
+res <- f(c(18,9,-8),c(0.1,-0.1,-0.2),-0.1, 0.25, 0.5, 0.4, 0)
+
+# check that it matches the given output
+assertthat::assert_that(all(abs(res$h - c(0.2, 0.4, 0.8)) < 0.05))
+assertthat::assert_that(all(abs(res$y - c(0.05, 0.1, 0.2)) < 0.005))
+```
+
+Compute $\frac{\partial E}{\partial z_{1}}$
+
+$$E = E_0 + E_1 + E_2$$
+$$\frac{\partial E}{\partial z_1} = 0 + \frac{\partial E_1}{\partial z_1} + \frac{\partial E_2}{\partial z_1}$$
+$$ = \frac{\partial E_1}{\partial y_1} \frac{\partial y_1}{\partial h_1} \frac{\partial h_1}{\partial z_1} + \frac{\partial E_2}{\partial y_2} \frac{\partial y_2}{\partial h_2} \frac{\partial h_2}{\partial z_2} \frac{\partial z_2}{\partial h_1} \frac{\partial h_1}{\partial z_1}$$
+$$= -(t_1 - y_1)w_{hy}\frac{e^{-z_1}}{(1+e^{-z_1})^2} - (t_2 - y_2)w_{hy}\frac{e^{-z_2}}{(1+e^{-z_2})^2}w_{hh}\frac{e^{-z_1}}{(1+e^{-z_1})^2}$$
+
+
+
+### Analytically
+
+```{r}
+dE_dz1 <- -1*(res$ytarget[2]-res$y[2])*res$why*exp(-1*res$z[2])*(1+exp(-1*res$z[2]))^(-2) +
+  -1*(res$ytarget[3]-res$y[3])*res$why*exp(-1*res$z[3])*(1+exp(-1*res$z[3]))^(-2)*res$whh*exp(-1*res$z[2])*(1+exp(-1*res$z[2]))^(-2)
+dE_dz1
+```
+
+### Estimate
+
+```{r}
+ftest <- function(x, ytarget, wxh, why, whh, hbias, ybias, offset)
+{
+  len <- length(x)
+  assertthat::assert_that(length(ytarget) == len)
+  
+  z <- numeric(len)
+  h <- numeric(len)
+  z[0+1] <- hbias + x[0+1]*wxh
+  h[0+1] <- plogis(z[0+1])
+  for (i in 2:len)
+  {
+    z[i] <- hbias + x[i]*wxh + h[i-1]*whh
+    if (i == 2) z[i] <- z[i] + offset
+    h[i] <- plogis(z[i])
+  }
+  y <- ybias + why*h
+  E <- 0.5*(ytarget-y)^2
+  Etotal <- sum(E)
+  return(list(x=x,z=z,h=h,y=y,ytarget=ytarget,E=E, Etotal=Etotal,
+              wxh=wxh, why=why, whh=whh, hbias=hbias, ybias=ybias))
+}
+
+reslow <- ftest(c(18,9,-8),c(0.1,-0.1,-0.2),-0.1, 0.25, 0.5, 0.4, 0, -0.0001)
+reshigh <- ftest(c(18,9,-8),c(0.1,-0.1,-0.2),-0.1, 0.25, 0.5, 0.4, 0, 0.0001)
+
+dE_dz1_test <- (reshigh$Etotal - reslow$Etotal)/(reshigh$z[2] - reslow$z[2])
+all.equal(dE_dz1_test, dE_dz1)
+```
+
+## Question 5
+
+```{r}
+res <- f(c(1,0,0,0), c(0,0,0,0.5), 1, 1, -2, 0, 0)
+reslow <- f(c(1,0,0,0), c(0,0,0,0.5), 1-0.0001, 1, -2, 0, 0)
+reshigh <- f(c(1,0,0,0), c(0,0,0,0.5), 1+0.0001, 1, -2, 0, 0)
+
+dE3_dwxh <- (reshigh$E[4] - reslow$E[4]) / (reshigh$wxh - reslow$wxh)
+dE3_dwxh
+
+res <- f(c(1,0,0,0), c(0,0,0,0.5), 10, 1, -2, 0, 0)
+reslow <- f(c(1,0,0,0), c(0,0,0,0.5), 10-0.0001, 1, -2, 0, 0)
+reshigh <- f(c(1,0,0,0), c(0,0,0,0.5), 10+0.0001, 1, -2, 0, 0)
+
+dE3_dwxh <- (reshigh$E[4] - reslow$E[4]) / (reshigh$wxh - reslow$wxh)
+dE3_dwxh
+```
+
+Therefore, vanishing derivative.

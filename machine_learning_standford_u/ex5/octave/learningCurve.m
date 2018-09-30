@@ -52,7 +52,13 @@ error_val   = zeros(m, 1);
 %
 
 % ---------------------- Sample Solution ----------------------
-
+for i = 1:m
+  xtemp = X(1:i,:);
+  ytemp = y(1:i);
+  theta = trainLinearReg(xtemp, ytemp, lambda);
+  error_train(i) = 1 / 2 / i * sum((xtemp * theta - ytemp) .* (xtemp * theta - ytemp));
+  error_val(i) = 1 / 2 / m * sum((Xval * theta - yval) .* (Xval * theta - yval));
+endfor
 
 
 

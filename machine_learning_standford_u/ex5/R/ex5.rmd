@@ -1,0 +1,285 @@
+---
+title: "Coursera Machine Learning Exercise 5"
+author: "Rob Carnell"
+date: "September 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+require(R.matlab)
+require(ggplot2)
+require(compiler)
+require(assertthat)
+require(caret)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "hb82795")
+{
+  repositoryPath <- file.path("C:", "developer","repositories","DataAnalyticsTeam")
+  dataPath <- file.path(repositoryPath, "Training", "Coursera_Machine_Learning", 
+                        "machine-learning-ex4", "data")
+} else if (tolower(user) == "rob")
+{
+  repositoryPath <- file.path("C:","Users","Rob","Documents","Repositories")
+  dataPath <- file.path(repositoryPath, "training","machine_learning_standford_u","ex5","data")
+}
+assert_that(file.exists(repositoryPath))
+assert_that(file.exists(dataPath))
+
+```
+
+# Regularized Linear Regression
+
+### Read in the Data
+
+```{r}
+ex5data <- readMat(file.path(dataPath, "ex5data1.mat"))
+```
+
+### Plot the Data
+
+```{r}
+# plot the training data
+df1 <- data.frame(x = ex5data$X, y = ex5data$y)
+g1 <- ggplot(df1, aes(x = x, y = y)) + geom_point() +
+  xlab("Change in water level") + ylab("Water flowing out of the dam")
+plot(g1)
+```
+
+## Create Functions
+
+```{r}
+bindOnes <- function(X)
+{
+  m <- nrow(X)
+  return(matrix(c(rep(1,m), X), nrow=m))
+}
+stopifnot(all(c(bindOnes(matrix(c(1,2,3,4,5,6),nrow=3))) == c(1,1,1,1,2,3,4,5,6)))
+
+createColumnVec <- function(z)
+{
+  return(matrix(z, ncol=1))
+}
+
+linearRegCostFunction <- function(theta, X, y, lambda)
+{
+  m <- nrow(X)
+  temp <- X %*% theta - y
+  J <- 1.0 / 2.0 / m * sum(temp * temp)
+  temp_theta <- theta
+  temp_theta[1] <- 0
+  J <- J + lambda / 2.0 / m * sum(temp_theta * temp_theta)
+  return(J)
+}
+cLinearRegCostFunction <- cmpfun(linearRegCostFunction, options=list(compile=3))
+
+linearRegCostFunctionGradient <- function(theta, X, y, lambda)
+{
+  m <- nrow(X)
+  temp_theta <- theta
+  temp_theta[1] <- 0
+  grad <- 1 / m * t(X) %*% (X %*% theta - y)
+  grad <- grad + lambda / m * temp_theta
+  return(grad)
+}
+cLinearRegCostFunctionGradient <- cmpfun(linearRegCostFunctionGradient, options=list(compile=3))
+
+trainLinearReg <- function(X, y, lambda)
+{
+  initial_theta <- createColumnVec(numeric(ncol(X)))
+  o1 <- optim(initial_theta, fn=cLinearRegCostFunction, gr=cLinearRegCostFunctionGradient,
+            X = X, y = y, lambda = lambda,
+            method = "CG", control = list(maxit = 1000, reltol = 1E-6))
+  return(o1$par)
+}
+
+predictLinearReg <- function(X, theta)
+{
+  return(X %*% theta)
+}
+
+learningCurve <- function(X, y, Xval, yval, lambda)
+{
+  m <- nrow(X)
+  error_train <- numeric(m)
+  error_val <- numeric(m)
+  
+  for (i in 1:m)
+  {
+    theta <- trainLinearReg(X[1:i,, drop=FALSE], y[1:i,, drop=FALSE], lambda)
+    error_train[i] <- linearRegCostFunction(theta, X[1:i,, drop=FALSE], y[1:i,, drop=FALSE], 0)
+    error_val[i] <- linearRegCostFunction(theta, Xval, yval, 0)
+  }
+  return(list(error_train=error_train, error_val=error_val))
+}
+
+polyFeatures <- function(X, p, m=NA, v=NA)
+{
+  stopifnot(ncol(X) == 2)
+  X_poly <- matrix(0, nrow=nrow(X), ncol=1+p)
+  # ones
+  X_poly[,1] <- X[,1]
+  # first order
+  X_poly[,2] <- X[,2]
+  # 
+  for (i in 2:p)
+  {
+    X_poly[,i+1] <- X[,2]^i
+  }
+  
+  if (length(m) == 1 && length(v) == 1 && is.na(m) && is.na(v))
+  {
+    # center and scale
+    mean_vec <- apply(X_poly, 2, mean)
+    var_vec <- apply(X_poly, 2, var)
+  } else
+  {
+    mean_vec <- m
+    var_vec <- v
+  }
+  means <- matrix(rep(mean_vec, each=nrow(X)), nrow=nrow(X_poly),
+                  ncol=ncol(X_poly))
+  var <- matrix(rep(var_vec, each=nrow(X)), nrow=nrow(X_poly), 
+                ncol=ncol(X_poly))
+  X_poly[,2:(1+p)] <- (X_poly[,-1] - means[,-1])/sqrt(var[,-1])
+  if (length(m) == 1 && length(v) == 1 && is.na(m) && is.na(v))
+  {
+    return(list(X_poly=X_poly, m=mean_vec, v=var_vec))
+  } else
+  {
+    return(X_poly)
+  }
+}
+temp <- polyFeatures(matrix(c(1,1,1,2), nrow=2, ncol=2), 2)
+stopifnot(all.equal(temp$X_poly[1,],
+                    c(1, -0.7071068, -0.7071068), tolerance=1E-5))
+```
+
+## Check Functions
+
+```{r}
+X <- bindOnes(as.matrix(ex5data$X))
+y <- createColumnVec(ex5data$y)
+theta <- createColumnVec(c(1,1))
+Xval <- bindOnes(as.matrix(ex5data$Xval))
+yval <- createColumnVec(ex5data$yval)
+Xtest <- bindOnes(as.matrix(ex5data$Xtest))
+ytest <- createColumnVec(ex5data$ytest)
+
+J <- linearRegCostFunction(theta, X, y, 1)
+
+assert_that(all.equal(J, 303.993192, tolerance = 1E-5))
+
+Jgrad <- linearRegCostFunctionGradient(theta, X, y, 1)
+
+assert_that(all.equal(c(Jgrad), c(-15.303016, 598.250744), tolerance = 1E-5))
+
+theta <- trainLinearReg(X, y, 0)
+
+df1$pred <- predictLinearReg(X, theta)
+g1 <- ggplot(df1, aes(x = x, y = y)) + geom_point() + geom_line(aes(x = x, y = pred)) +
+  xlab("Change in water level") + ylab("Water flowing out of the dam")
+plot(g1)
+
+```
+
+## Learning Curve for Linear Regression
+
+```{r}
+errs <- learningCurve(X, y, Xval, yval, 0)
+
+df3 <- data.frame(val=unlist(errs, use.names=FALSE), 
+                  index=1:nrow(X),
+                  type=rep(c("Train","Validation"), each=nrow(X)))
+g1 <- ggplot(df3, aes(x = index, y=val, col=type, group=type)) + geom_line() +
+  xlab("Number of Training Examples") + ylab("Error") + 
+  ggtitle("Learning curve for linear regression")
+plot(g1)
+```
+
+## Polynomial Regression
+
+```{r}
+temp <- polyFeatures(X, 8)
+X_poly <- temp$X_poly
+X_val_poly <- polyFeatures(Xval, 8, temp$m, temp$v)
+X_test_poly <- polyFeatures(Xtest, 8, temp$m, temp$v)
+
+f <- function(lambda)
+{
+  theta <- trainLinearReg(X_poly, y, lambda)
+  
+  df1$pred <- predictLinearReg(X_poly, theta)
+  g1 <- ggplot(df1, aes(x = x, y = y)) + geom_point() + geom_line(aes(x = x, y = pred)) +
+    xlab("Change in water level") + ylab("Water flowing out of the dam") +
+    ggtitle(paste0("Polynomial Regression Fit, lambda=", lambda))
+  plot(g1)
+  
+  errs <- learningCurve(X_poly, y, X_val_poly, yval, lambda)
+  
+  df3 <- data.frame(val=unlist(errs, use.names=FALSE), 
+                    index=1:nrow(X),
+                    type=rep(c("Train","Validation"), each=nrow(X)))
+  g1 <- ggplot(df3, aes(x = index, y=val, col=type, group=type)) + geom_line() +
+    xlab("Number of Training Examples") + ylab("Error") + 
+    ggtitle(paste0("Learning curve for polynomial regression, lambda=", lambda))
+  plot(g1)
+}
+f(0)
+f(1)
+f(100)
+```
+
+## Selecting Lambda using Validation
+
+```{r}
+lambdas <- c(0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10)
+m <- length(lambdas)
+error_train <- numeric(m)
+error_val <- numeric(m)
+
+for (i in seq_along(lambdas))
+{
+  theta <- trainLinearReg(X_poly, y, lambdas[i])
+  error_train[i] <- linearRegCostFunction(theta, X_poly, y, 0)
+  error_val[i] <- linearRegCostFunction(theta, X_val_poly, yval, 0)
+}
+
+df4 <- data.frame(val=c(error_train, error_val), 
+                  lambda=rep(lambdas, times=2),
+                  type=rep(c("Train","Validation"), each=m))
+g1 <- ggplot(df4, aes(x = lambda, y=val, col=type, group=type)) + geom_line() +
+  xlab("Lambda") + ylab("Error") 
+plot(g1)
+
+# Test Error
+theta <- trainLinearReg(X_poly, y, 3)
+linearRegCostFunction(theta, X_test_poly, ytest, 0)
+
+```
+
+# caret Package Test
+
+```{r}
+# L2 regularization or ridge regression
+# alpha = 0 (alpha=1 for L1 regularization or Lasso, 0 < alpha < 1 for both L1 and L2 or elasticnet)
+# conduct repeated 5 fold cross-validation, 10 times
+df <- rbind(as.data.frame(X_poly[,-1]), as.data.frame(X_val_poly[,-1]))
+df$y <- c(y, yval)
+train_control <- trainControl(method="repeatedcv", number=5, repeats=10, verboseIter=FALSE)
+lmfit <- train(y ~ ., data=df, 
+               method="glmnet",
+               metric="RMSE",
+               trControl=train_control,
+               tuneGrid=expand.grid(alpha=0, lambda=seq(0, 4,length=20)))
+plot(lmfit)
+# best lambda
+lmfit$bestTune$lambda
+# final coefficients
+coef(lmfit$finalModel, lmfit$bestTune$lambda)
+
+# compare to previous
+linearRegCostFunction(coef(lmfit$finalModel, lmfit$bestTune$lambda), X_test_poly, ytest, 0)
+
+```

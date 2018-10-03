@@ -1,0 +1,143 @@
+---
+title: "Coursera Machine Learning Exercise 6"
+author: "Rob Carnell"
+date: "October 1, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+require(R.matlab)
+require(ggplot2)
+require(compiler)
+require(assertthat)
+require(e1071)
+require(caret)
+require(RColorBrewer)
+require(kernlab)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "rob")
+{
+  repositoryPath <- file.path("C:","Users","Rob","Documents","Repositories")
+  dataPath <- file.path(repositoryPath, "training","machine_learning_standford_u","ex6","data")
+}
+assert_that(file.exists(repositoryPath))
+assert_that(file.exists(dataPath))
+
+```
+
+# SVM
+
+## Read in the Data
+
+```{r}
+ex6data1 <- readMat(file.path(dataPath, "ex6data1.mat"))
+ex6data2 <- readMat(file.path(dataPath, "ex6data2.mat"))
+ex6data3 <- readMat(file.path(dataPath, "ex6data3.mat"))
+```
+
+## Part 1: Linear Kernel 
+
+### Plot the Data
+
+```{r}
+# plot the training data
+df1 <- data.frame(x1 = ex6data1$X[,1], 
+                  x2 = ex6data1$X[,2],
+                  y = factor(ex6data1$y))
+g1 <- ggplot(df1, aes(x = x1, y = x2, col = y, shape=y)) + geom_point() +
+  xlab("X1") + ylab("X2")
+plot(g1)
+```
+
+### Fit SVM
+
+```{r}
+fit1 <- svm(y ~ x1 + x2, data=df1, scale=FALSE, kernel="linear", cost=1)
+fit2 <- svm(y ~ x1 + x2, data=df1, scale=FALSE, kernel="linear", cost=100)
+fit.grid <- expand.grid(x1=seq(min(df1$x1),max(df1$x1),length=100),
+                        x2=seq(min(df1$x2),max(df1$x2),length=100))
+fit.grid$y <- as.numeric(predict(fit1, newdata=fit.grid))
+ggplot(fit.grid, aes(x=x1, y=x2, z=y)) + geom_contour(bins=1) +
+  geom_point(aes(x=x1, y=x2, col=y, shape=y), data=df1)
+
+fit.grid$y <- as.numeric(predict(fit2, newdata=fit.grid))
+ggplot(fit.grid, aes(x=x1, y=x2, z=y)) + geom_contour(bins=1) +
+  geom_point(aes(x=x1, y=x2, col=y, shape=y), data=df1)
+
+# Other plotting methods
+brewer.pal.function <- function(n) brewer.pal(6, "Set2")[1:n]
+plot(fit1, data=df1)
+
+plot(fit2, data=df1)
+
+fit3 <- ksvm(y ~ x1 + x2, data=df1, kernel="vanilladot", scaled=FALSE, C = 1)
+plot(fit3, data=df1)
+
+fit4 <- ksvm(y ~ x1 + x2, data=df1, kernel="vanilladot", scaled=FALSE, C = 100)
+plot(fit4, data=df1)
+```
+
+## Part 2: Gaussian Kernel
+
+```{r}
+df2 <- data.frame(x1 = ex6data2$X[,1], 
+                  x2 = ex6data2$X[,2],
+                  y = factor(ex6data2$y))
+g1 <- ggplot(df2, aes(x = x1, y = x2, col = y, shape=y)) + geom_point() +
+  xlab("X2") + ylab("X1")
+plot(g1)
+
+fit1 <- svm(y ~ x1 + x2, data=df2, scale=FALSE, kernel="radial", cost=1, gamma=30)
+fit3 <- ksvm(y ~ x1 + x2, data=df2, kernel="rbfdot", scaled=FALSE, C = 1,
+             kpar=list(sigma=30.50))
+
+fit.grid <- expand.grid(x1=seq(min(df2$x1),max(df2$x1),length=100),
+                        x2=seq(min(df2$x2),max(df2$x2),length=100))
+
+fit.grid$y <- as.numeric(predict(fit1, newdata=fit.grid))
+ggplot(fit.grid, aes(x=x1, y=x2, z=y)) + geom_contour(bins=1) +
+  geom_point(aes(x=x1, y=x2, col=y, shape=y), data=df2)
+
+fit.grid$y <- as.numeric(predict(fit3, newdata=fit.grid))
+ggplot(fit.grid, aes(x=x1, y=x2, z=y)) + geom_contour(bins=1) +
+  geom_point(aes(x=x1, y=x2, col=y, shape=y), data=df2)
+
+```
+
+## Part 3: Optimize Parameters
+
+```{r}
+df3 <- data.frame(x1 = ex6data3$X[,1], 
+                  x2 = ex6data3$X[,2],
+                  y = factor(ex6data3$y))
+df3val <- data.frame(x1 = ex6data3$Xval[,1],
+                     x2 = ex6data3$Xval[,2],
+                     y = factor(ex6data3$yval))
+df3comb <- rbind(df3, df3val)
+g1 <- ggplot(df3, aes(x = x1, y = x2, col = y, shape=y)) + geom_point() +
+  xlab("X1") + ylab("X2")
+plot(g1)
+
+train_control <- trainControl(method="repeatedcv", number=5, repeats=10, verboseIter=FALSE)
+fit <- train(y ~ x1 + x2, data=df3comb, 
+             method="svmRadial",
+             metric="Accuracy",
+             trControl=train_control,
+             tuneGrid=expand.grid(C=c(0.5, 0.75, 1.0, 1.25, 1.5),
+                                  sigma = seq(0.5, 1.5, by=0.1)))
+plot(fit)
+# C (cost)
+param(fit$finalModel)$C
+# sigma (dispersion)
+kpar(kernelf(fit$finalModel))$sigma
+
+fit.grid <- expand.grid(x1=seq(min(df3$x1),max(df3$x1),length=100),
+                        x2=seq(min(df3$x2),max(df3$x2),length=100))
+
+fit.grid$y <- as.numeric(predict(fit, newdata=fit.grid))
+ggplot(fit.grid, aes(x=x1, y=x2, z=y)) + geom_contour(bins=1) +
+  geom_point(aes(x=x1, y=x2, col=y, shape=y), data=df3)
+
+```

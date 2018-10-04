@@ -1,0 +1,171 @@
+---
+title: "Coursera Machine Learning Exercise 7"
+author: "Rob Carnell"
+date: "October 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+require(R.matlab)
+require(ggplot2)
+require(compiler)
+require(assertthat)
+require(caret)
+require(RColorBrewer)
+
+user <- Sys.info()["user"]
+repositoryPath <- NA
+if (tolower(user) == "rob")
+{
+  repositoryPath <- file.path("C:","Users","Rob","Documents","Repositories")
+  dataPath <- file.path(repositoryPath, "training","machine_learning_standford_u","ex7","data")
+}
+assert_that(file.exists(repositoryPath))
+assert_that(file.exists(dataPath))
+
+```
+
+# Kmeans and PCA
+
+## Read in the Data
+
+```{r}
+ex7data1 <- readMat(file.path(dataPath, "ex7data1.mat"))
+ex7data2 <- readMat(file.path(dataPath, "ex7data2.mat"))
+ex7faces <- readMat(file.path(dataPath, "ex7faces.mat"))
+bird_small <- readMat(file.path(dataPath, "bird_small.mat"))
+```
+
+## Part 1: Kmeans 
+
+### Plot the Data
+
+```{r}
+# plot the training data
+df1 <- data.frame(x1 = ex7data2$X[,1], 
+                  x2 = ex7data2$X[,2])
+g1 <- ggplot(df1, aes(x = x1, y = x2)) + geom_point() +
+  xlab("X1") + ylab("X2")
+plot(g1)
+```
+
+### Functions
+
+```{r}
+findClosestCentroids <- function(X, initial_centroids)
+{
+  k <- nrow(initial_centroids)
+  stopifnot(ncol(initial_centroids) == ncol(X))
+  m <- nrow(X)
+  n <- ncol(X)
+  temp <- apply(X, 1, function(z){
+    A <- rbind(z, initial_centroids)
+    d <- as.matrix(dist(A))
+    return(which.min(d[1,-1]))
+  })
+  return(temp)
+}
+
+computeCentroids <- function(X, idx, k)
+{
+  m <- nrow(X)
+  n <- ncol(X)
+  stopifnot(length(idx) == m)
+  centroids <- matrix(NA, nrow=k, ncol=n)
+  for (i in 1:k)
+  {
+    ind <- which(idx == i)
+    centroids[i,] = apply(X[ind,], 2, mean)
+  }
+  return(centroids)
+}
+
+my_kmeans <- function(X, initial_centroids, max_iters)
+{
+  stopifnot(ncol(initial_centroids) == ncol(X))
+  k <- nrow(initial_centroids)
+  m <- nrow(X)
+  n <- ncol(X)
+  centroids <- initial_centroids;
+  for (i in 1:max_iters)
+  {
+    idx <- findClosestCentroids(X, centroids)
+    centroids <- computeCentroids(X, idx, k)
+  }
+  return(list(centroids=centroids, class=idx))
+}
+
+
+
+
+```
+
+### Test functions
+
+```{r}
+initial_centroids <- matrix(c(3, 6, 8, 3, 2, 5), nrow=3, ncol=2)
+idx <- findClosestCentroids(df1, initial_centroids)
+assert_that(all.equal(idx[1:3], c(1, 3, 2)))
+
+centroids <- computeCentroids(df1, idx, 3)
+assert_that(all.equal(c(centroids), c(2.428301,5.813503,7.119387,3.157924,2.633656,3.616684),
+                      tolerance=1E-5))
+```
+
+### Run Kmeans
+
+```{r}
+temp <- my_kmeans(df1, initial_centroids, 10)
+
+g1 <- ggplot(df1, aes(x = x1, y = x2)) + geom_point(col=temp$class) +
+  geom_point(aes(x = V1, y=V2), data=as.data.frame(temp$centroids), 
+             col=1:nrow(initial_centroids), pch=4, size=6) +
+  xlab("X1") + ylab("X2")
+plot(g1)
+
+temp2 <- kmeans(df1, 3, iter.max=10, nstart=5)
+
+g1 <- ggplot(df1, aes(x = x1, y = x2)) + geom_point(col=temp2$cluster) +
+  geom_point(aes(x = x1, y = x2), data=as.data.frame(temp2$centers), 
+             col=1:3, pch=4, size=6) +
+  xlab("X1") + ylab("X2")
+plot(g1)
+```
+
+### Kmeans pixel clustering + Compression
+
+```{r}
+A <- bird_small$A / 255
+A <- matrix(c(A), nrow=dim(A)[1]*dim(A)[2], ncol=dim(A)[3])
+m <- nrow(A)
+n <- ncol(A)
+k <- 16
+max_iters <- 10
+temp <- kmeans(A, k, iter.max=max_iters, nstart=5)
+
+image(matrix(1:(128*128), nrow=128, ncol=128), useRaster=TRUE, col=rgb(A),
+      axes=FALSE)
+image(matrix(temp$cluster, nrow=128, ncol=128), useRaster=TRUE, col=rgb(temp$centers),
+      axes=FALSE)
+```
+
+## Part 2: PCA
+
+### Plot the data
+
+```{r}
+df2 <- data.frame(x1 = ex7data1$X[,1], 
+                  x2 = ex7data1$X[,2])
+g1 <- ggplot(df2, aes(x = x1, y = x2)) + geom_point() +
+  xlab("X2") + ylab("X1")
+plot(g1)
+
+
+```
+
+### PCA Functions
+
+```{r}
+
+
+```

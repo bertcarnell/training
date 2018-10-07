@@ -293,10 +293,13 @@ num_movies <- ex8movies_params$num.movies
 num_features <- ex8movies_params$num.features
 my_ratings <- numeric(num_movies)
 
-# if I really liked Star Wars, what is recommended?
+# if I really liked Star Wars, and didn't like Romance, what is recommended?
 my_ratings[grep("Star Wars", df3$ids)] <- 5
 my_ratings[grep("Empire Strikes Back", df3$ids)] <- 5
 my_ratings[grep("Return of the Jedi", df3$ids)] <- 5
+my_ratings[grep("Sleepless in Seattle", df3$ids)] <- 1
+my_ratings[grep("Dirty Dancing", df3$ids)] <- 1
+my_ratings[grep("Bridges of Madison County", df3$ids)] <- 1
 
 Y <- cbind(my_ratings, Y)
 R <- cbind(my_ratings > 0, R)
@@ -306,9 +309,9 @@ X <- matrix(runif(num_movies*num_features), nrow=num_movies, ncol=num_features)
 Theta <- matrix(runif(num_users*num_features), nrow=num_users, ncol=num_features)
 initial_param <- c(c(X), c(Theta))
 
-o1 <- optim(par=initial_param, fn=cofiCostFunc, gr=cofiCostFuncGrad, Y=res$Ynorm, R=R,
+o1 <- optim(par=initial_param, fn=cofiCostFunc_c, gr=cofiCostFuncGrad_c, Y=res$Ynorm, R=R,
             num_users=num_users, num_movies=num_movies, num_features=num_features, 
-            lambda=10, method="L-BFGS-B", control=list(maxit=50))
+            lambda=10, method="L-BFGS-B", control=list(maxit=200))
 
 temp <- num_movies * num_features
 X <- matrix(o1$par[1:temp], num_movies, num_features)
@@ -316,4 +319,16 @@ Theta <- matrix(o1$par[(temp + 1):length(o1$par)], num_users, num_features)
 
 p <- X %*% t(Theta)
 my_predictions <- p[,1] + res$Ymean[1]
+
+df4 <- data.frame(scores = my_predictions,
+                  ids = movie_ids,
+                  stringsAsFactors=FALSE)
+ord <- order(df4$scores, decreasing = TRUE)
+df4 <- df4[ord[c(1:10, (num_movies-10):num_movies)],]
+df4$ids <- factor(df4$ids, levels=df4$ids)
+
+g1 <- ggplot(df4, aes(x = ids, y = scores)) + geom_bar(stat="identity") + coord_flip() +
+  xlab("") + ylab("Score")
+plot(g1)
+
 ```

@@ -13,12 +13,12 @@ user <- Sys.info()["user"]
 repositoryPath <- NA
 if (tolower(user) == "hb82795")
 {
-  repositoryPath <- file.path("C:", "developer","repositories","DataAnalyticsTeam")
+  repositoryPath <- file.path("C:", "developer","repositories")
 }
 stopifnot(file.exists(repositoryPath))
 
-dataPath <- file.path(repositoryPath, "Training", "Coursera_Machine_Learning", 
-                      "machine-learning-ex1", "data")
+dataPath <- file.path(repositoryPath, "training", "machine_learning_standford_u", 
+                      "ex1", "data")
 ```
 
 # Single Variable Data

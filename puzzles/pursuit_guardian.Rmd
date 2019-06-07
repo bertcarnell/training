@@ -1,0 +1,507 @@
+---
+title: "Pursuit Problem"
+author: "Rob Carnell"
+date: "June 6, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(deSolve)
+```
+
+## Problem Statement
+
+From the [Guardian](https://www.theguardian.com/science/2019/jun/03/can-you-solve-it-dogs-in-pursuit):
+
+Four dogs are in four corners of a square of side length 1. Each dog starts 
+running towards the dog immediately anti-clockwise to it. The dogs start at the 
+same time, they all run at the same speed, and at every moment each dog is 
+running directly towards the neighbouring dog.
+
+During the pursuit, the dogs will run in a spiral before they all meet in the 
+centre. How far does each dog travel before the group collision?
+
+For bonus points, can you work out how far the dogs would travel if they 
+started at the three corners of an equilateral triangle of side length 1, or 
+the five corners of a regular pentagon of side length 1? Would the distance be 
+further or shorter than in the case wih the square?
+
+## Starting with the Square...
+
+Assumptions, for generality
+
+- Square is of size $L$
+- dog runs at speed (magnitude of velocity) $v = ||\vec{v}||$
+- $(x,y) = (0,0)$ is the lower left corner of the square
+- $(x_1,y_1)$ is the position of dog 1
+
+We can decompose the velocity into $x$ and $y$ components.  We know that the
+direction of the velocity is directly at the next dog, so the components
+of velocity lie along the triangle between the dogs.
+
+$$\vec{v} = v_x \hat{i} + v_y \hat{j}$$
+
+$$v_x = \frac{dx_1}{dt} = v \frac{x_2-x_1}{\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}}\\
+v_y = \frac{dy_1}{dt} = v \frac{y_2-y_1}{\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}}$$
+
+
+Note that the paths of the four dogs are symmetric.  The $x$ position of dog 1
+will match the $y$ position of dog 2.  This allows us to transform the coupled
+differential equations between dogs into a set of coupled differential equations
+for one dog.
+
+$$x_1 = y_2\\
+y_1 = L - x_2$$
+
+
+Therefore:
+
+$$\frac{dx_1}{dt} = v \frac{L - y_1 - x_1}{\sqrt{(L - y_1 - x_1)^2 + (x_1 - y_1)^2}}\\
+\frac{dy_1}{dt} = v \frac{x_1 - y_1}{\sqrt{(L - y_1 - x_1)^2 + (x_1 - y_1)^2}}$$
+
+Check for consistency:
+
+At $t = 0$, $x_1 = y_1 = 0$, $\frac{dx_1}{dt} = v$ and $\frac{dy_1}{dt} = 0$
+
+Also note where $l$ is path length, $\frac{dl}{dt} = \sqrt{\frac{dx}{dt}^2 + \frac{dy}{dt}^2} = v$
+
+### Numerical Solution
+
+These differential equations cannot be solved analytically in this format, so
+a numerical solution can be used.
+
+#### Simple solver
+
+Starting with coarse time steps, we see that the dogs will not meet in the middle.
+
+```{r bigjumps, echo=FALSE}
+L <- 5 # m
+f <- function(delt)
+{
+  v <- 1 # m/s
+  d <- L # distance between them to start
+  x1 <- 0
+  y1 <- 0
+  v1x <- v
+  v1y <- 0
+  t <- 0
+  theta1 <- 0
+  i <- 0
+  
+  while (d > v*delt)
+  {
+    i <- i + 1
+    t <- t + delt
+    theta1 <- theta1 + atan2(v*delt, d - v*delt)
+    d <- sqrt((d - delt*v)^2 + (delt*v)^2)
+    x1 <- c(x1, x1[length(x1)] + v1x*delt)
+    y1 <- c(y1, y1[length(y1)] + v1y*delt)
+    v1x <- v*cos(theta1)
+    v1y <- v*sin(theta1)
+  }
+  return(list(x1 = x1, y1 = y1))
+}
+res <- f(1)
+
+plot(res$x1, res$y1, type = "l", xlim = c(0, L), ylim = c(0, L),
+     xlab = "x", ylab = "y")
+```
+
+Each dog travels `r sum(sqrt(diff(res$x1)^2 + diff(res$y1)^2))` units in this case.
+
+Making the time step much smaller...
+
+```{r smallstep, echo = FALSE}
+res <- f(0.001)
+
+plot(res$x1, res$y1, type = "l", xlim = c(0, L), ylim = c(0, L),
+     xlab = "x", ylab = "y")
+```
+
+Each dog travels `r sum(sqrt(diff(res$x1)^2 + diff(res$y1)^2))` units which is very close to $L$.
+
+#### Numeric ODE solver
+
+Using the numeric solution for ordinary differential equations for initial 
+value problems in the `deSolve` package...
+
+```{r numeric_solve, echo = TRUE}
+# diff eq system
+dydt <- function(t, y, parms)
+{
+  L <- parms$L
+  v <- parms$v
+  x1 <- y[1]
+  y1 <- y[2]
+  denom <- sqrt((L - y1 - x1)^2 + (x1 - y1)^2)
+  list(c(v*(L - y1 - x1)/denom, v*(x1 - y1)/denom))
+}
+
+# initial conditions
+yini <- c(y1 = 0, y2 = 0)
+N <- 100
+L <- 5
+
+# vary the velocity parameter
+df5_2 <- ode(y = yini, func = dydt,
+          times = seq(0, L/2, length = N), 
+          parms = list(L = L, v = 2))
+
+df5_1 <- ode(y = yini, func = dydt,
+             times = seq(0, L/1, length = N), 
+             parms = list(L = L, v = 1))
+
+df5_5 <- ode(y = yini, func = dydt,
+             times = seq(0, L/5, length = N), 
+             parms = list(L = L, v = 5))
+
+# the track of the dog is insensitive to the velocity
+plot(df5_2[,"y1"], df5_2[,"y2"], type = "l", xlim = c(0, L), ylim = c(0, L),
+     xlab = "x", ylab = "y")
+lines(df5_1[,"y1"], df5_1[,"y2"])
+lines(df5_5[,"y1"], df5_5[,"y2"])
+```
+
+The dogs run the same distance no matter the velocity:
+
+```{r dist, echo=FALSE}
+paste("Length 5, velocity 2: ", sum(sqrt(diff(df5_2[,"y1"])^2 + diff(df5_2[,"y2"])^2)))
+paste("Length 5, velocity 1: ", sum(sqrt(diff(df5_1[,"y1"])^2 + diff(df5_1[,"y2"])^2)))
+paste("Length 5, velocity 5: ", sum(sqrt(diff(df5_5[,"y1"])^2 + diff(df5_5[,"y2"])^2)))
+```
+
+Plotting the $x$ and $y$ position versus time:
+
+```{r vtime, echo=FALSE}
+plot(df5_2[,"time"], df5_2[,"y1"], type = "l", xlim = c(0, L), ylim = c(0, L), 
+     xlab = "time", ylab = "coordinate x or y", col = "blue")
+lines(df5_2[,"time"], df5_2[,"y2"], col = "blue")
+lines(df5_1[,"time"], df5_1[,"y1"], col = "red")
+lines(df5_1[,"time"], df5_1[,"y2"], col = "red")
+legend("topright", legend = c("Velocity 2", "Velocity 1"), col = c("blue", "red"), lty = 1)
+```
+
+Finally, note that the rate of change in the radius from the center is constant!
+
+```{r radius, echo=TRUE}
+# radius
+sqrt((df5_2[,"y1"] - L/2)^2 + (df5_2[,"y2"] - L/2)^2)[1:10]
+# change in radius
+diff(sqrt((df5_2[,"y1"] - L/2)^2 + (df5_2[,"y2"] - L/2)^2))[1:10]
+```
+
+## Switching to polar coordinates
+
+$$(x,y) = (r cos(\theta) + L/2,\ r sin(\theta) + L/2)$$
+
+$$\frac{dx}{dt} = \frac{dr}{dt} cos(\theta) - r sin(\theta)\frac{d\theta}{dt}\\
+\frac{dy}{dt} = \frac{dr}{dt} sin(\theta) - r cos(\theta) \frac{d\theta}{dt}$$
+
+
+Equation A:
+
+$$\frac{dr}{dt} cos(\theta) - r sin(\theta)\frac{d\theta}{dt} = v\frac{L - rsin(\theta) - L/2 - rcos(\theta) - L/2}{\sqrt{(L - rsin(\theta) - L/2 - rcos(\theta) - L/2)^2 + (rcos(\theta) + L/2 - rsin(\theta) - L/2)}}\\
+ = v \frac{-r\left(sin(\theta) + cos(\theta)\right)}{\sqrt{r^2(sin(\theta)+cos(\theta))^2 + r^2(cos(\theta) - sin(\theta))^2}}\\
+  = v \frac{-\left(sin(\theta) + cos(\theta)\right)}{\sqrt{(sin(\theta)+cos(\theta))^2 + (cos(\theta) - sin(\theta))^2}} = \frac{-v}{\sqrt{2}}(sin(\theta) + cos(\theta))$$
+
+Equation B:
+
+$$\frac{dr}{dt} sin(\theta) - r cos(\theta) \frac{d\theta}{dt} = \frac{v}{\sqrt{2}}(cos(\theta) - sin(\theta))$$
+
+Now, make a linear combination of Eq A and Eq B to separate variables:
+
+$cos(\theta)$ x Eq A + $sin(\theta)$ x Eq B
+
+$$\frac{dr}{dt}cos^2(\theta) - rsin(\theta)cos(\theta) + \frac{dr}{dt}sin^2(\theta) + rsin(\theta)cos(\theta) = -\frac{v}{\sqrt{2}}cos(\theta)(sin(\theta) + cos(\theta)) + \frac{v}{\sqrt{2}}sin(\theta)(cos(\theta) - sin(\theta))\\
+\frac{dr}{dt} = -\frac{v}{\sqrt{2}}$$
+
+Integrating to find the radius function:
+
+$$r(t) = \int_o^t-\frac{v}{\sqrt{2}} dt + C = -\frac{v}{\sqrt{2}}t + \frac{L}{\sqrt{2}}$$
+
+$$r(t_{end}) = 0 = -\frac{v}{\sqrt{2}}t_{end} + -\frac{L}{\sqrt{2}}\\
+t_{end} = \frac{L}{v}$$
+
+$cos(\theta)$ x Eq B - $sin(\theta)$ x Eq A
+
+$$\frac{dr}{dt} sin(\theta)cos(\theta) - r cos^2(\theta) \frac{d\theta}{dt} - \frac{dr}{dt} sin(\theta)cos(\theta) - r sin^2(\theta)\frac{d\theta}{dt} = \frac{v}{\sqrt{2}}cos(\theta)(cos(\theta) - sin(\theta)) + \frac{v}{\sqrt{2}}sin(\theta)(cos(\theta) + sin(\theta))\\
+= \frac{v}{r\sqrt{2}}$$
+
+Integrating to find the function for $\theta$:
+
+$$\theta(t) = \int_0^t \frac{v}{r\sqrt{2}} dt + C = \int_0^t \frac{v}{\sqrt{2}}\frac{1}{-\frac{v}{\sqrt{2}}t + \frac{L}{\sqrt{2}}} dt + C\\
+= -ln(r) + C\\
+\theta(0) = -3\pi/4 = -ln(L/\sqrt{2}) + C\\
+\theta(t) = -ln(r) + ln(L/\sqrt{2}) - 3\pi/4$$
+
+Finally, integrating to find the distance traveled:
+
+$$\int_0^{t_{end}} \frac{dl}{dt} dt = \int_0^{t_{end}} v dt = v t_{end} = L$$
+
+### Plotting
+
+```{r polar1, echo=FALSE}
+L <- 5
+v <- 1
+t <- seq(.Machine$double.eps, L/v - 4*.Machine$double.eps, length = 1000)
+r <- -v / sqrt(2) * t + L / sqrt(2)
+theta <- -log(r) + log(L / sqrt(2)) - 3*pi/4
+theta_d <- theta * 180 / pi
+
+plot(t, r, type = "l", ylim = c(0, L/sqrt(2)), xlab = "t", ylab = "r")
+plot(t, theta_d, type = "l", ylim = c(-3*pi/4*180/pi, 5*pi/4*180/pi), 
+     xlab = "t", ylab = "Theta (degrees)")
+plot(r, theta_d, type = "l", ylim = c(-3*pi/4*180/pi, 5*pi/4*180/pi), 
+     xlim = c(0, L/sqrt(2)), xlab = "radius", ylab = "Theta (degrees)")
+```
+
+```{r 4dogs}
+x1 <- r * cos(theta) + L/2
+y1 <- r * sin(theta) + L/2
+x2 <- r * cos(theta + pi/2) + L/2
+y2 <- r * sin(theta + pi/2) + L/2
+x3 <- r * cos(theta + pi) + L/2
+y3 <- r * sin(theta + pi) + L/2
+x4 <- r * cos(theta - pi/2) + L/2
+y4 <- r * sin(theta - pi/2) + L/2
+plot(x1, y1, type = "l", xlim = c(0, L), ylim = c(0, L), col = "red", xlab = "x",
+     ylab = "y")
+lines(x2, y2, col = "blue")
+lines(x3, y3, col = "green")
+lines(x4, y4, col = "purple")
+```
+
+## On a triangle:
+
+```{r tri, echo=FALSE}
+dydt <- function(t, y, parms)
+{
+  L <- parms$L
+  v <- parms$v
+  x1 <- y[1]
+  y1 <- y[2]
+  x2 <- y[3]
+  y2 <- y[4]
+  x3 <- y[5]
+  y3 <- y[6]
+  denom12 <- sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  denom23 <- sqrt((x3 - x2)^2 + (y3 - y2)^2)
+  denom31 <- sqrt((x1 - x3)^2 + (y1 - y3)^2)
+  list(
+    c(
+      v*(x2 - x1)/denom12, 
+      v*(y2 - y1)/denom12,
+      v*(x3 - x2)/denom23,
+      v*(y3 - y2)/denom23,
+      v*(x1 - x3)/denom31,
+      v*(y1 - y3)/denom31))
+}
+L <- 5
+v <- 1
+yini <- c(y1 = 0, y2 = 0, y3 = L, y4 = 0, y5 = L/2, y6 = sqrt(3) * L / 2)
+N <- 100
+
+df <- ode(y = yini, func = dydt,
+          times = seq(0, 2*L/3/v, length = N), 
+          parms = list(L = L, v = v))
+
+df <- as.data.frame(df)
+names(df) <- c("time","x1","y1","x2","y2","x3","y3")
+
+plot(df$x1, df$y1, type = "l", xlim = c(0, L), ylim = c(0, L))
+lines(df$x2, df$y2)
+lines(df$x3, df$y3)
+```
+
+```{r length3}
+# Length of the line
+sum(sqrt(diff(df$x1)^2 + diff(df$y1)^2))
+```
+
+```{r radius3, echo=TRUE}
+# radius
+sqrt((df$x1 - L/2)^2 + (df$y1 - L/2/sqrt(3))^2)[1:10]
+# change in radius is constant
+diff(sqrt((df$x1 - L/2)^2 + (df$y1 - L/2/sqrt(3))^2))[1:10]
+# theta1 is a constant distance from theta2
+atan2(df$y2 - L/2/sqrt(3), df$x2 - L/2)[1:10] - atan2(df$y1 - L/2/sqrt(3), df$x1 - L/2)[1:10]
+``` 
+
+$$x = r cos(\theta) + L/2\\
+y = r sin(\theta) + L/2\sqrt{3})$$
+
+$$\frac{dx}{dt} = \frac{dr}{dt} cos(\theta) - r sin(\theta)\frac{d\theta}{dt}\\
+\frac{dy}{dt} = \frac{dr}{dt} sin(\theta) - r cos(\theta) \frac{d\theta}{dt}$$
+
+
+Equation A:
+
+$$\frac{dr_1}{dt} cos(\theta_1) - r_1 sin(\theta_1)\frac{d\theta_1}{dt}\\
+= v\frac{r_2cos(\theta_2) + L/2 - r_1cos(\theta_1) - L/2}{\sqrt{(r_2cos(\theta_2) + L/2 - r_1cos(\theta_1) - L/2)^2 + (r_2sin(\theta_2) + L/2\sqrt{3} - r_1sin(\theta_1) - L/2\sqrt{3})^2}}$$
+
+Note: $r_1 = r_2$ and $\theta_2 = \theta_1 + 2\pi/3$ 
+
+therefore
+
+$$cos(\theta_2) = cos(\theta_1 + 2\pi/3) = cos(\theta_1)cos(2\pi/3) - sin(\theta_1)sin(2\pi/3) = - \frac{1}{2}cos(\theta_1) - \frac{\sqrt{3}}{2}sin(\theta_1)\\
+sin(\theta_2) = sin(\theta_1 + 2\pi/3) = sin(\theta_1)cos(2\pi/3) + cos(\theta_1)sin(2\pi/3) = - \frac{1}{2}sin(\theta_1) + \frac{\sqrt{3}}{2}cos(\theta_1)$$
+
+$$\frac{dr_1}{dt} cos(\theta_1) - r_1 sin(\theta_1)\frac{d\theta_1}{dt}\\
+= v\frac{-\frac{3}{2}cos(\theta_1) - \frac{\sqrt{3}}{2}sin(\theta_1)}{\sqrt{(-\frac{3}{2}cos(\theta_1) - \frac{\sqrt{3}}{2}sin(\theta_1))^2 + (-\frac{3}{2}sin(\theta_1) + \frac{\sqrt{3}}{2}cos(\theta_1))^2}}\\
+= \frac{v}{\sqrt{3}}\left(-\frac{3}{2}cos(\theta_1) - \frac{\sqrt{3}}{2}sin(\theta_1)\right)$$
+
+Equation B
+
+$$\frac{dr}{dt} sin(\theta) - r cos(\theta) \frac{d\theta}{dt}\\
+= \frac{v}{\sqrt{3}}\left(-\frac{3}{2}sin(\theta) + \frac{\sqrt{3}}{2}cos(\theta)\right)$$
+
+Separating variables:
+
+$cos(\theta)$ x Eq A + $sin(\theta)$ x Eq B
+
+$$\frac{dr}{dt} = \frac{v}{\sqrt{3}}\left(-\frac{3}{2}cos^2(\theta) - \frac{\sqrt{3}}{2}sin(\theta)cos(\theta) - \frac{3}{2}sin^2(\theta) + \frac{\sqrt{3}}{2}cos(\theta)sin(\theta)\right)\\
+=\frac{-v\sqrt{3}}{2}$$
+
+$cos(\theta)$ x Eq B - $sin(\theta)$ x Eq A
+
+$$\frac{d\theta}{dt} = \frac{1}{r}\frac{v}{\sqrt{3}}\left(-\frac{3}{2}sin(\theta)cos(\theta) + \frac{\sqrt{3}}{2}cos^2(\theta) + \frac{3}{2}cos(\theta)sin(\theta) + \frac{\sqrt{3}}{2}sin^2(\theta)\right) = \frac{v}{2r}$$
+
+$$r(t) = \int_0^t \frac{-v\sqrt{3}}{2} dt + C = \frac{-v\sqrt{3}}{2} t + C\\
+r(0) = L/\sqrt{3}\\
+r(t) = \frac{-v\sqrt{3}}{2} t + \frac{L}{\sqrt{3}}\\
+r(t_{end}) = 0\\
+t_{end} = \frac{2L}{3v}$$
+
+$$\theta(t) = \int_0^t \frac{v}{2r} dt + C = \int_0^t \frac{v}{2(\frac{-v\sqrt{3}}{2} t + \frac{L}{\sqrt{3}})} dt + C = \frac{-1}{\sqrt{3}}ln(r) + C\\
+\theta_1(0) = -5\pi/6 = \frac{-1}{\sqrt{3}}ln(\frac{L}{\sqrt{3}}) + C\\
+\theta_1(t) = \frac{-1}{\sqrt{3}}ln(r) + \frac{1}{\sqrt{3}}ln(\frac{L}{\sqrt{3}}) - 5\pi/6$$
+
+Distance
+
+$$\int_0^{t_{end}} v dt = \frac{2}{3}L$$
+
+### Plotting
+
+```{r polar3, echo=FALSE}
+L <- 5
+v <- 1
+t <- seq(.Machine$double.eps, 2*L/3/v - 4*.Machine$double.eps, length = 1000)
+r <- -v * sqrt(3) / 2 * t + L / sqrt(3)
+theta <- -log(r)/sqrt(3) + 1/sqrt(3)*log(L / sqrt(3)) - 5*pi/6
+theta_d <- theta * 180 / pi
+
+plot(t, r, type = "l", ylim = c(0, L/sqrt(2)), xlab = "t", ylab = "r")
+plot(t, theta_d, type = "l", ylim = c(-5*pi/6*180/pi, 7*pi/6*180/pi), 
+     xlab = "t", ylab = "Theta (degrees)")
+plot(r, theta_d, type = "l", ylim = c(-5*pi/6*180/pi, 7*pi/6*180/pi), 
+     xlim = c(0, L/sqrt(2)), xlab = "radius", ylab = "Theta (degrees)")
+```
+
+
+```{r 3dogs}
+x1 <- r * cos(theta) + L/2
+y1 <- r * sin(theta) + L/2/sqrt(3)
+x2 <- r * cos(theta + 2*pi/3) + L/2
+y2 <- r * sin(theta + 2*pi/3) + L/2/sqrt(3)
+x3 <- r * cos(theta + 4*pi/3) + L/2
+y3 <- r * sin(theta + 4*pi/3) + L/2/sqrt(3)
+plot(x1, y1, type = "l", xlim = c(0, L), ylim = c(0, L), col = "red", xlab = "x",
+     ylab = "y")
+lines(x2, y2, col = "blue")
+lines(x3, y3, col = "green")
+```
+
+## Finally, on a regular Pentagon
+
+The center is at $x = L/2$ and $y = \frac{L}{2} tan(3\pi/10)$ and radius 
+$r(0) = \frac{L}{2*cos(3\pi/10)} = \frac{L}{2sin(\pi/5)}$
+
+Making changes for the pentagon:
+
+$$x = r cos(\theta) + L/2\\
+y = r sin(\theta) + \frac{L}{2}tan(3\pi/10)$$
+
+$r_1 = r_2$ and $\theta_2 = \theta_1 + 2\pi/5$ 
+
+$$cos(\theta_2) = cos(\theta_1 + 2\pi/5) = cos(\theta_1)cos(2\pi/5) - sin(\theta_1)sin(2\pi/5) = cos(\theta_1)\alpha - sin(\theta_1)\beta\\
+sin(\theta_2) = sin(\theta_1 + 2\pi/5) = sin(\theta_1)cos(2\pi/5) + cos(\theta_1)sin(2\pi/5) = sin(\theta_1)\alpha + cos(\theta_1)\beta$$
+
+Equation A:
+
+$$\frac{dr}{dt} cos(\theta) - r sin(\theta)\frac{d\theta}{dt}\\
+= v\frac{(\alpha-1)cos(\theta) - \beta sin(\theta)}{\sqrt{((\alpha-1)cos(\theta) - \beta sin(\theta))^2 + ((\alpha-1)sin(\theta) + \beta cos(\theta))^2}}\\
+= \frac{v}{\sqrt{(\alpha-1)^2 + \beta^2}}\left((\alpha-1)cos(\theta) - \beta sin(\theta)\right)$$
+
+Equation B
+
+$$\frac{dr}{dt} sin(\theta) - r cos(\theta) \frac{d\theta}{dt}\\
+= \frac{v}{\sqrt{(\alpha-1)^2 + \beta^2}}\left((\alpha-1)sin(\theta) + \beta cos(\theta)\right)$$
+
+Separating variables:
+
+$cos(\theta)$ x Eq A + $sin(\theta)$ x Eq B
+
+$$\frac{dr}{dt} = \frac{v}{\sqrt{(\alpha-1)^2 + \beta^2}}\left((\alpha-1)cos^2(\theta) - \beta sin(\theta)cos(\theta) + (\alpha-1)sin^2(\theta) + \beta cos(\theta)sin(\theta)\right)\\
+=\frac{v(\alpha-1)}{\sqrt{(\alpha-1)^2 + \beta^2}}$$
+
+$cos(\theta)$ x Eq B - $sin(\theta)$ x Eq A
+
+$$\frac{d\theta}{dt} = \frac{1}{r}\frac{v}{\sqrt{(\alpha-1)^2 + \beta^2}} \left((\alpha-1)sin(\theta)cos(\theta) + \beta cos^2(\theta) - (\alpha-1)sin(\theta) + \beta sin^2(\theta)\right)\\
+= \frac{v\beta}{r\sqrt{(\alpha-1)^2 + \beta^2}}$$
+
+$$r(t) = \int_0^t \frac{v(\alpha-1)}{\sqrt{(\alpha-1)^2 + \beta^2}} dt + C\\
+= \frac{v(\alpha-1)}{\sqrt{(\alpha-1)^2 + \beta^2}} t + C\\
+r(0) = \frac{L}{2*cos(3\pi/10)}\\
+r(t) = \frac{v(\alpha-1)}{\sqrt{(\alpha-1)^2 + \beta^2}} t + \frac{L}{2*cos(3\pi/10)}\\
+r(t_{end}) = 0\\
+t_{end} = \frac{-L}{2\gamma}\frac{\sqrt{(\alpha-1)^2 + \beta^2}}{v(\alpha-1)}$$
+
+Radius at $t = 0$: `r 1/2/cos(3*pi/10)` L
+Radius at $t = t_{end}$: 0
+
+$$\theta(t) = \int_0^t \frac{v\beta}{r\sqrt{(\alpha-1)^2 + \beta^2}} dt + C\\
+= \frac{\beta}{(\alpha-1)}ln(r) + C\\
+\theta_1(0) = 13\pi/10 = \frac{\beta}{(\alpha-1)}ln\left(\frac{L}{2cos(3\pi/10)}\right) + C\\
+\theta_1(t) = \frac{\beta}{(\alpha-1)}ln(r) - \frac{\beta}{(\alpha-1)}ln\left(\frac{L}{2cos(3\pi/10)}\right) + 13\pi/10$$
+
+$\theta_1$ at $t = 0$: `r sin(2*pi/5)/(cos(2*pi/5) - 1)*log(1/2/cos(3*pi/10)*5) - sin(2*pi/5)/(cos(2*pi/5) - 1)*log(5/2/cos(3*pi/10)) + 13*pi/10`
+
+Distance
+
+$$\int_0^{t_{end}} v dt = \frac{-L}{2\gamma}\frac{\sqrt{(\alpha-1)^2 + \beta^2}}{(\alpha-1)}$$
+= `r -1/2/cos(3*pi/10)*sqrt((cos(2*pi/5) - 1)^2 + (sin(2*pi/5))^2)/(cos(2*pi/5) - 1)` L
+
+This is equivalent to the text-book answer of $L/(1-cos(2\pi/n))$ where $n$ is
+the number of sides of the polygon.
+
+```{r polar5, echo=FALSE}
+L <- 5
+v <- 1
+t <- seq(.Machine$double.eps, -L/2/v/cos(3*pi/10)*sqrt((cos(2*pi/5) - 1)^2 + (sin(2*pi/5))^2)/(cos(2*pi/5) - 1) - 4*.Machine$double.eps, length = 1000)
+r <- v * (cos(2*pi/5) - 1) / sqrt((cos(2*pi/5) - 1)^2 + (sin(2*pi/5))^2) * t + 
+  L / 2 / cos(3*pi/10)
+theta <- sin(2*pi/5)/(cos(2*pi/5) - 1)*log(r) - sin(2*pi/5)/(cos(2*pi/5) - 1) *
+  log(L/2/cos(3*pi/10)) + 13*pi/10
+theta_d <- theta * 180 / pi
+
+x1 <- r * cos(theta) + L/2
+y1 <- r * sin(theta) + L/2*tan(3*pi/10)
+x2 <- r * cos(theta + 2*pi/5) + L/2
+y2 <- r * sin(theta + 2*pi/5) + L/2*tan(3*pi/10)
+x3 <- r * cos(theta + 4*pi/5) + L/2
+y3 <- r * sin(theta + 4*pi/5) + L/2*tan(3*pi/10)
+x4 <- r * cos(theta + 6*pi/5) + L/2
+y4 <- r * sin(theta + 6*pi/5) + L/2*tan(3*pi/10)
+x5 <- r * cos(theta + 8*pi/5) + L/2
+y5 <- r * sin(theta + 8*pi/5) + L/2*tan(3*pi/10)
+
+plot(x1, y1, type = "l", xlim = c(-L, 2*L), ylim = c(0, 2*L), col = "red", xlab = "x",
+     ylab = "y")
+lines(x2, y2, col = "blue")
+lines(x3, y3, col = "green")
+lines(x4, y4, col = "purple")
+lines(x5, y5, col = "orange")
+```
+
+

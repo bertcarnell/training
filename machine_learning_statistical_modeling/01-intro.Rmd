@@ -1,0 +1,92 @@
+# Introduction {#intro}
+
+You can label chapter and section titles using `{#label}` after them, e.g., we can reference Chapter \@ref(intro). If you do not manually label them, there will be automatic labels anyway, e.g., Chapter \@ref(methods).
+
+Figures and tables with captions will be placed in `figure` and `table` environments, respectively.
+
+```{r nice-fig, fig.cap='Here is a nice figure!', out.width='80%', fig.asp=.75, fig.align='center'}
+par(mar = c(4, 4, .1, .1))
+plot(pressure, type = 'b', pch = 19)
+```
+
+Reference a figure by its code chunk label with the `fig:` prefix, e.g., see Figure \@ref(fig:nice-fig). Similarly, you can reference tables generated from `knitr::kable()`, e.g., see Table \@ref(tab:nice-tab).
+
+```{r nice-tab, tidy=FALSE}
+knitr::kable(
+  head(iris, 20), caption = 'Here is a nice table!',
+  booktabs = TRUE
+)
+```
+
+You can write citations, too. For example, we are using the **bookdown** package [@R-bookdown] in this sample book, which was built on top of R Markdown and **knitr** [@xie2015].
+
+## Definitions
+
+For the purposes of this series, we will work with the following definitions:
+
+- Machine Learning:
+- Statsitical Modeling:
+    - Least Squares:
+    - Maximum Likelihood:
+- Bayesian Modeling:
+    - Conjugate Prior:
+    - Markov Chain Monte Carlo
+        - Gibbs Sampling
+        - Metropolis Hastings Sampling
+    - Hamiltonian Monte Carlo
+
+Using some notation, we can be more specific about the goal of each discipline:
+
+### Machine learning
+
+$$\theta: min_{\theta} J(Y, \theta | X)$$
+
+where 
+
+- $\theta$ is a set of parameters that are fit to data
+- $Y$ is a matrix of outcomes with $n$ observations and $m$ variables.
+- $X$ is a matrix of data with $n$ observations and $k$ features.  The features can
+be directly measured or can be any function of directly measured quantities.
+- $J(Y, \theta | X)$ is the cost function of the model applied to the observations.  The 
+output of the cost function is a univariate real number.
+
+### Statistical Modeling:
+
+$$g(Y) = f(X, \theta) + \epsilon$$
+
+where:
+
+- $g(Y)$ is the link function of the observed outcomes
+- $f(X,\theta)$ is a function of the observed outcomes 
+- $\epsilon$ is an error distribution where $E(\epsilon) = 0$
+
+### Bayesian Modeling:
+
+$$P(\theta | Y, X) \propto P(\theta) P(Y, X | \theta)$$
+
+where:
+
+- $P()$ is a probability function
+- $P(\theta)$ is the prior probability function over the space of parameters
+- $P(Y, X, | \theta)$ is the likelihood function of the observed data given the parameter values
+- $P(\theta | Y, X)$ is the posterior probability distribution of the parameters given the observed data
+
+## Machine Learning Process
+
+### Train
+
+Determine the value of the parameters that minimize the cost function for one set of 
+hyper-parameter values.
+
+### Validate / Cross Validate / Hyper-parameter tuning
+
+Determine the value of the hyper-parameters that minimize the cost function.
+
+### Test
+
+Determine the accuracy of the model on data which was not used for training
+or validation.
+
+
+
+

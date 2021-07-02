@@ -1,0 +1,5 @@
+book_filename: "machine_learning_statistical_modeling"
+delete_merged_file: true
+language:
+  ui:
+    chapter_name: "Chapter "

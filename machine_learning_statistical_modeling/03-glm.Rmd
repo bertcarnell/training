@@ -1,0 +1,7 @@
+# Generalized Linear Models
+
+## Machine Learning
+
+## Statistical Modeling
+
+## Bayesian Modeling

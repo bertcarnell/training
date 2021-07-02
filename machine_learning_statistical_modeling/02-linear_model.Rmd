@@ -1,0 +1,8 @@
+# Linear Model
+
+## Machine Learning
+
+## Statistical Modeling
+
+## Bayesian Modeling
+

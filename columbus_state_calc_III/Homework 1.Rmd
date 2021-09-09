@@ -1,0 +1,184 @@
+---
+title: "Weekly Assignment I 9/5"
+author: "RC"
+date: "9/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+```
+
+## 1
+
+Given the vectors $u=<2, 1, 3>$ and $v=<-1, 3, 2>$ find each of the following.
+Always use proper notation.
+
+```{r}
+u <- c(2,1,3)
+v <- c(-1,3,2)
+```
+
+$3u - 2v$ = <`r 3*u - 2*v`>
+
+$u \cdot v$ = `r c(u %*% v)`
+
+$||u||$ = `r sqrt(c(u %*% u))`
+
+$Proj_{v}u = (u \cdot \hat{v}) \hat{v} = \frac{u \cdot v}{v \cdot v} v$ = <`r c((u %*% v) / (v %*% v)) * v`>
+
+angle between **u** and **v** = `r acos((u %*% v) / sqrt(u %*% u) / sqrt(v %*% v))` = `r pi / 3` = $\frac{\pi}{3}$
+
+```{python}
+N = sv.CoordSys3D('N')
+u = 2*N.i + N.j + 3*N.k
+v = -1*N.i + 3*N.j + 2*N.k
+print(f"3u - 2v = {3*u - 2*v}")
+print(f"u.v = {u.dot(v)}")
+print(f"||u|| = {u.magnitude()}")
+print(f"Proj_v(u) = {u.dot(v) / v.dot(v) * v}")
+print(f"angle between u and v = {sy.acos(u.dot(v) / u.magnitude() / v.magnitude())}")
+```
+
+## 2
+
+Unit vector in direction $v = 5\hat{i} + 2\hat{j} - \hat{k}$ = <`r c(5, 2, -1)/sqrt(c(c(5, 2, -1) %*% c(5, 2, -1)))`>
+
+Check the dot product is 1
+
+`r (c(5, 2, -1)/sqrt(c(c(5, 2, -1) %*% c(5, 2, -1)))) %*% (c(5, 2, -1)/sqrt(c(c(5, 2, -1) %*% c(5, 2, -1))))`
+
+```{python}
+v = 5*N.i + 2*N.j - N.k
+v.normalize()
+```
+
+## 3
+
+```{r}
+f <- function(x, y) (x %*% y) / sqrt(x %*% x) / sqrt(y %*% y)
+```
+
+a) $\hat{a} \cdot \hat{b}$ = `r f(c(4,3,8), c(8,9,11))`  Neither - $a$ and $b$ are not linearly related
+
+b) $\hat{p} \cdot \hat{r}$ = `r f(c(3,-4,2),c(-9,12,-6))`  Parallel $p=-3r$
+
+c) $\hat{w} \cdot \hat{v}$ = `r f(c(4,-4,6), c(-2,1,2))` Orthogonal
+
+d) $\hat{T} \cdot \hat{N}$ = `r f(c(5,0,11), c(0,sqrt(5),0))` Orthogonal 
+
+```{python}
+f"a.b = {(4*N.i + 3*N.j + 8*N.k).normalize().dot((8*N.i + 9*N.j + 11*N.k).normalize()).evalf()}"
+f"p.r = {(3*N.i - 4*N.j + 2*N.k).normalize().dot((-9*N.i + 12*N.j - 6*N.k).normalize()).evalf()}"
+f"v.w = {(4*N.i - 4*N.j + 6*N.k).normalize().dot((-2*N.i + 1*N.j + 2*N.k).normalize()).evalf()}"
+f"p.r = {(5*N.i + 11*N.k).normalize().dot((sy.sqrt(5)*N.j).normalize()).evalf()}"
+```
+
+## 4
+
+$$u = <5,a,-3>,\ \ v = <b,-4,2>$$
+
+Orthogonal
+
+$$u \cdot v = 0$$
+
+$$5b -4a -6 = 0$$
+
+$$b = 2, a = 1$$
+
+$u \cdot v$ = `r c(5,1,-3) %*% c(2,-4,2)`
+
+Parallel
+
+$$u = \alpha v$$
+
+$$5 = \alpha b,\ \ a = -4 \alpha,\ \ -3 = 2\alpha$$
+
+$$\alpha = \frac{-3}{2},\ \ a = 6,\ \ b = \frac{-10}{3}$$
+
+$\hat{u} \cdot \hat{v}$ = `r f(c(5,6,-3), c(-10/3,-4,2))`
+
+```{python}
+a = sy.Symbol('a')
+b = sy.Symbol('b')
+c = sy.Symbol('c')
+u = 5*N.i + a*N.j - 3*N.k
+v = b*N.i - 4*N.j + 2*N.k
+aexpr = sy.solve(u.dot(v))
+
+f"a = {aexpr[0][a].subs(b, 1)}, b = {1}"
+f"u.v = {u.subs(a, aexpr[0][a].subs(b, 1)).dot(v.subs(b, 1))}"
+
+cexpr = sy.solve(u - c*v)
+aexpr = sy.solve(u - cexpr[1][c]*v)
+bexpr = sy.solve(u.subs(a, aexpr[1][a]) - cexpr[1][c]*v)
+
+f"a = {aexpr[1][a]}, b = {bexpr[1][b]}"
+
+f"u.v = {u.subs(a, aexpr[1][a]).normalize().dot(v.subs(b, bexpr[1][b]).normalize())}"
+```
+
+## 5
+
+Given the vectors $v = <3,1,5>$ and $w = <−2,6,3>$
+
+```{r}
+cross_product <- function(x, y){
+  stopifnot(length(x) == length(y))
+  stopifnot(length(x) == 3)
+  i <- c(2,3,1)
+  j <- c(3,1,2)
+  x[i]*y[j] - x[j]*y[i]
+}
+```
+
+$v \times w$ = <`r cross_product(c(3,1,5), c(-2,6,3))`>
+
+Show $v \times w$ is perpendicular to $v$ and $w$
+
+```{r}
+cross_product(c(3,1,5), c(-2,6,3)) %*% c(3, 1, 5)
+cross_product(c(3,1,5), c(-2,6,3)) %*% c(-2, 6, 3)
+```
+
+```{python}
+v = 3*N.i + N.j + 5*N.k
+w = -2*N.i + 6*N.j + 3*N.k
+f"v x w = {v.cross(w)}"
+
+f"v . (v x w) = {v.dot(v.cross(w))}"
+f"w . (v x w) = {w.dot(v.cross(w))}"
+```
+
+## 6
+
+A FALSE
+
+$$2^{k^2+3}\ ??\ 2^{k^2} + 8$$
+
+$$2^{k^2+3} = 2^{k^2}2^3 = 2^{k^2}8 \neq 2^{k^2} + 8$$
+B FALSE
+
+$$\sqrt{x^2+1}\ ??\ x+1$$
+
+$$(\sqrt{x^2+1})^2 = x^2 + 1 \neq (x+1)^2 = x^2 + 2x + 1$$
+
+C FALSE
+
+$$\frac{2x^2+1}{x}\ ??\ 2x^2 + 1 + x^{-1}$$
+
+$$\frac{2x^2+1}{x} = 2x + x^{-1} \neq 2x^2 + 1 + x^{-1}$$
+
+D FALSE
+
+$$\sqrt{16} = \pm 4$$
+
+E TRUE
+
+$$\frac{8x^7}{3x^5}\ = \frac{8}{3}x^2$$
+

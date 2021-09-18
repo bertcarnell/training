@@ -164,6 +164,37 @@ l = r.subs(t, 2) + r_prime.subs(t, 2)*t
 print(f"l(t) = r(2) + t*r'(2) = {l}")
 ```
 
+Check with plots
+
+```{r}
+X <- data.frame(tr = seq(-10, 10, length = 51))
+X$col <- ifelse(X$tr == 2, "red", "black")
+X$pch <- ifelse(X$tr == 2, 19, 1)
+X$x <- X$tr^2
+X$y <- 9*X$tr
+X$z <- X$tr^3
+
+s3d <- with(X, scatterplot3d::scatterplot3d(x=x, y=y, z=z, 
+                                            xlab="x", ylab="y", zlab="z", 
+                                            color = X$col, pch = X$pch))
+
+X$tl <- seq(-12, 8, length = 51)
+stopifnot(X$tl[X$tr == 2] == 0)
+
+X$xl <- 4*X$tl + 4
+X$yl <- 9*X$tl + 18
+X$zl <- 12*X$tl + 8
+
+s3d$points3d(X$xl, X$yl, X$zl, type = "l", col = "blue")
+
+par(mar = c(5,4,4,2) + 0.1)
+plot(X$x, X$y, col = X$col, pch = X$pch, xlab = "x", ylab = "y")
+lines(X$xl, X$yl, col = "blue")
+
+plot(X$x, X$z, col = X$col, pch = X$pch, xlab = "x", ylab = "z")
+lines(X$xl, X$zl, col = "blue")
+```
+
 ## Question 6
 
 ```{python}

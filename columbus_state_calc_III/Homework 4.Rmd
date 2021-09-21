@@ -1,0 +1,227 @@
+---
+title: "Weekly Assignment 4"
+author: "RC"
+date: "`r Sys.Date()"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(scatterplot3d)
+require(reticulate)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+```
+
+## Question 1
+
+Curvature of a circle with radius of 3 cm
+
+- $r(t)$ curve
+- $T = \frac{r'(t)}{||r'(t)||}$ normalized tangent vector
+- $\kappa = ||\frac{dT}{ds}|| = \frac{||T'(t)||}{||r'(t)||} = \frac{||r'\ \times\ r''||}{||r'||^3}$ Curvature
+
+```{python}
+r = 3*sy.cos(t)*N.i + 3*sy.sin(t)*N.j
+
+r_prime = sy.diff(r)
+
+T = r_prime / r_prime.magnitude().trigsimp()
+
+T_prime = sy.diff(T)
+
+k = T_prime.magnitude() / r_prime.magnitude()
+
+print(f"curvature = {k.trigsimp()} cm^-1")
+
+# alternate method
+
+r_prime_prime = sy.diff(r_prime)
+
+k = r_prime.cross(r_prime_prime).magnitude() / r_prime.magnitude()**3
+
+print(f"curvature = {k.trigsimp()} cm^-1")
+```
+
+## Question 2
+
+Unit tangent vector and principle unit normal vector at $t=\pi$
+
+```{python}
+r = sy.cos(3*t)*N.i + 2*sy.sin(3*t)*N.j + N.k
+
+r_prime = sy.diff(r)
+
+UT = r_prime / r_prime.magnitude().trigsimp()
+
+PUN = sy.diff(UT) / sy.diff(UT).magnitude()
+
+print(f"T(t) = {UT}")
+print(f"T(pi) = {UT.subs(t, sy.pi)}")
+
+print(f"N(t) = {PUN.simplify()}")
+print(f"N(pi) = {PUN.subs(t, sy.pi)}")
+```
+
+```{r}
+f <- function(t) c(cos(3*t), 2*sin(3*t), 1)
+X <- as.data.frame(t(sapply(seq(0, 2*pi/3, length=51), f)))
+names(X) <- c("x", "y", "z")
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlim = c(-2,2), ylim=c(-2,2), zlim=c(-2,2),
+                             xlab="x", ylab="y", zlab="z", type="l")
+UT <- function(t) f(pi) + t*c(0, -1, 0)
+Y <- as.data.frame(t(sapply(seq(0, 1, length=51), UT)))
+sp1$points3d(Y$V1, Y$V2, Y$V3, type="l", col="blue", lwd=4)
+PUN <- function(t) f(pi) + t*c(1, 0, 0)
+Z <- as.data.frame(t(sapply(seq(0, 1, length=51), PUN)))
+sp1$points3d(Z$V1, Z$V2, Z$V3, type="l", col="red", lwd=4)
+```
+
+## Question 3
+
+Tangential and normal components of acceleration at $t=0$
+
+```{python}
+r = sy.exp(t)*sy.cos(2*t)*N.i + sy.exp(t)*sy.sin(2*t)*N.j + sy.exp(t)*N.k
+
+r_prime = sy.diff(r)
+
+r_prime_prime = sy.diff(r_prime)
+
+UT = r_prime / r_prime.magnitude().trigsimp()
+
+PUN = sy.diff(UT) / sy.diff(UT).magnitude()
+
+acc = r_prime_prime.subs(t, 0)
+
+tang_comp = r_prime_prime.subs(t, 0).dot(UT.subs(t, 0)) * UT.subs(t, 0) 
+
+norm_comp = r_prime_prime.subs(t, 0).dot(PUN.subs(t, 0)) * PUN.subs(t, 0)
+
+# check
+acc.magnitude() - sy.sqrt(tang_comp.dot(tang_comp) + norm_comp.dot(norm_comp)) == 0
+
+print(f"r''(0) = {acc}")
+print(f"tangential component of acceleration at (t=0) = {tang_comp}")
+print(f"normal component of acceleration at (t=0) = {norm_comp}")
+```
+
+```{r}
+f <- function(t) c(exp(t)*cos(2*t), exp(t)*sin(2*t), exp(t))
+X <- as.data.frame(t(sapply(seq(-2, 2, length=51), f)))
+names(X) <- c("x", "y", "z")
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlim = c(-1,3), ylim=c(-2,2), zlim=c(0,4),
+                             xlab="x", ylab="y", zlab="z", type="l")
+UT <- function(t) f(0) + t*c(1, 2, 1)
+Y <- as.data.frame(t(sapply(seq(0, 1, length=51), UT)))
+sp1$points3d(Y$V1, Y$V2, Y$V3, type="l", col="blue", lwd=4)
+PUN <- function(t) f(0) + t*c(-4, 2, 0)
+Z <- as.data.frame(t(sapply(seq(0, 1, length=51), PUN)))
+sp1$points3d(Z$V1, Z$V2, Z$V3, type="l", col="red", lwd=4)
+```
+
+## Question 4
+
+Tangent vector, normal vector, and binormal vector at $t = \frac{\pi}{3}$
+
+```{python}
+r = 4*sy.cos(t)*N.i + 4*sy.sin(t)*N.j + 2*t*N.k
+
+r_prime = sy.diff(r)
+
+UT = r_prime / r_prime.magnitude().trigsimp()
+
+PUN = sy.diff(UT) / sy.diff(UT).magnitude()
+
+B = UT.cross(PUN)
+
+print(f"T(t) = {UT}")
+print(f"T(pi/3) = {UT.subs(t, sy.pi / 3)}")
+
+print(f"N(t) = {PUN.simplify()}")
+print(f"N(pi/3) = {PUN.subs(t, sy.pi / 3)}")
+
+print(f"B(t) = {B.trigsimp()}")
+print(f"B(pi/3) = {B.subs(t, sy.pi / 3)}")
+```
+
+```{r}
+f <- function(t) c(4*cos(t), 4*sin(t), 2*t)
+X <- as.data.frame(t(sapply(seq(0, 2*pi, length=51), f)))
+names(X) <- c("x", "y", "z")
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlim = c(-5,5), ylim=c(-5,5), zlim=c(-1,15),
+                             xlab="x", ylab="y", zlab="z", type="l")
+UT <- function(t) f(pi/3) + t*c(-sqrt(15)/5, sqrt(5)/5, sqrt(5)/5)
+Y <- as.data.frame(t(sapply(seq(0, 1, length=51), UT)))
+sp1$points3d(Y$V1, Y$V2, Y$V3, type="l", col="blue", lwd=4)
+PUN <- function(t) f(pi/3) + t*c(-0.5, -sqrt(3)/2, 0)
+Z <- as.data.frame(t(sapply(seq(0, 1, length=51), PUN)))
+sp1$points3d(Z$V1, Z$V2, Z$V3, type="l", col="red", lwd=4)
+BUN <- function(t) f(pi/3) + t*c(sqrt(15)/10, -sqrt(5)/10, 2*sqrt(5)/5)
+B <- as.data.frame(t(sapply(seq(0, 1, length=51), BUN)))
+sp1$points3d(B$V1, B$V2, B$V3, type="l", col="green", lwd=4)
+```
+
+## Question 5
+
+Find the curvature of the space curve at $<2,4,2>$ which is $t=2$
+
+```{python}
+r = t*N.i + t**2*N.j + t**3/4*N.k
+
+r_prime = sy.diff(r)
+
+r_prime_prime = sy.diff(r_prime)
+
+k = r_prime.cross(r_prime_prime).magnitude() / r_prime.magnitude()**3
+
+print(f"k(t) = {k}")
+print(f"k(2) = {k.subs(t, 2)}")
+```
+
+## Question 6
+
+Calculate quantities at $t=0$
+
+```{python}
+r = sy.exp(2*t)*N.i + (sy.sin(2*t) - 4*t + t**2)*N.j + (sy.cos(t) + 3*t)*N.k
+
+r_prime = sy.diff(r)
+
+print(f"v(0) = r'(0) = {r_prime.subs(t, 0)}")
+
+r_prime_prime = sy.diff(r_prime)
+
+print(f"a(0) = r''(0) = {r_prime_prime.subs(t, 0)}")
+
+UT = r_prime / r_prime.magnitude()
+PUN = sy.diff(UT) / sy.diff(UT).magnitude()
+
+print(f"T(0) = {UT.subs(t, 0)}")
+
+tang_comp = r_prime_prime.subs(t, 0).dot(UT.subs(t, 0)) * UT.subs(t, 0) 
+
+norm_comp = r_prime_prime.subs(t, 0).dot(PUN.subs(t, 0)) * PUN.subs(t, 0)
+
+print(f"tangential component of acceleration at (t=0) = {tang_comp}")
+print(f"normal component of acceleration at (t=0) = {norm_comp}")
+
+print(f"N(0) = {PUN.subs(t, 0)}")
+
+k = r_prime.cross(r_prime_prime).magnitude() / r_prime.magnitude()**3
+
+print(f"k(0) = {k.subs(t, 0)}")
+
+# check
+r_prime_prime.subs(t,0).magnitude() - sy.sqrt(tang_comp.dot(tang_comp) + norm_comp.dot(norm_comp)) == 0
+```
+

@@ -1,0 +1,156 @@
+---
+title: "Weekly Assignment 5"
+author: "RC"
+date: "`r Sys.Date()"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(scatterplot3d)
+require(reticulate)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+```
+
+## Question 1
+
+$$f(x,y) = ln(2x^2 + y)$$
+
+$$x \in (-\infty, \infty),\ \ 2x^2 + y > 0,\ \ y \in (-2x^2, \infty)$$
+
+$$f(x,y) \in (-\infty, \infty)$$
+
+```{r}
+f <- function(x, y) log(2*x^2 + y)
+x <- c(seq(-100, 100, length = 50), 0.01)
+y <- c(seq(-100, 100, length = 50), 0.01)
+X <- expand.grid(x,y)
+names(X) <- c("x", "y")
+suppressWarnings(scatterplot3d::scatterplot3d(x = X$x, y = X$y, z = f(X$x, X$y),
+                                              xlab = "x", ylab = "y", zlab = "z"))
+
+```
+
+## Question 2
+
+### Part A
+
+$$g(x, y, z) = \sqrt{25-x^2-y^2-z^2}$$
+$$x, y, z \in [-5,5], \ \ where\ \ 25 - x^2 - y^2 - z^2 >= 0$$
+
+$$g(x,y,z) \in [0,5]$$
+## Question 3
+
+$$\lim_{(x,y) \to (0,0)} \frac{x^2}{x^2 + y^2}$$
+
+Translating to polar coordinates, $x = rcos\theta$ and $y = rsin\theta$
+
+Note that $x \to 0$ and $y \to 0$ as $r \to 0$ for any $\theta \in [0,2\pi)$
+
+$$ = \lim_{r \to 0} \frac{r^2cos^2\theta}{r^2} = \lim_{r \to 0} cos^2\theta$$
+
+the limit is undefined.
+
+Also, taking limits consecutively
+
+$$\lim_{(x,y) \to (0,0)} \frac{x^2}{x^2 + y^2} = \lim_{x \to 0} \lim_{y \to 0} \frac{x^2}{x^2 + y^2}$$
+
+$$\lim_{x \to 0} \frac{x^2}{x^2} = 1$$
+
+$$\lim_{(x,y) \to (0,0)} \frac{x^2}{x^2 + y^2} = \lim_{y \to 0} \lim_{x \to 0} \frac{x^2}{x^2 + y^2}$$
+
+$$\lim_{y \to 0} \frac{0}{y^2} = 0$$
+
+```{r}
+f <- function(x, y) x^2 / (x^2 + y^2)
+x <- exp(seq(1, -5, length = 50))
+plot(x, f(x, 0), type="l", col = "blue", xlab = "x", ylab = "z", xlim = c(0,3), ylim = c(-0.2, 1.2))
+lines(x, f(x, 0.1), col = "cyan")
+lines(rep(0, 50), f(0, x), col = "red")
+lines(rep(0.01, 50), f(0.1, x), col = "magenta")
+
+```
+
+### Part B
+
+$$\lim_{(x,y) \to (1,1)} \frac{xy-y^3}{x-y^2} = \lim_{(x,y) \to (1,1)} y  = 1$$
+
+
+## Question 4
+
+### Part A
+
+$$f(x,y)=cos(3xy^2)+4x^3sin(5y)+e^{y^3}$$
+
+$$\frac{\partial f}{\partial x} = -sin(3xy^2)(3y^2) + 12sin(5y)x^2$$
+
+$$\frac{\partial f}{\partial y} = -sin(3xy^2)(6xy) + 20x^3cos(5y) + e^{y^3}(3y^2)$$
+
+```{python}
+x = sy.Symbol('x')
+y = sy.Symbol('y')
+f = sy.cos(3*x*y**2) + 4*x**3*sy.sin(5*y) + sy.exp(y**3)
+print(f"df/dx = {sy.diff(f, x)}")
+print(f"df/dy = {sy.diff(f, y)}")
+```
+
+### Part B
+
+$$z = \sqrt{16x^2 + 4y^2}$$
+
+$$\frac{\partial z}{\partial x} = \frac{1}{2}(16x^2+4y^2)^{-1/2}(32x) = \frac{16x}{\sqrt{16x^2+4y^2}}$$
+
+$$\frac{\partial z}{\partial y} = \frac{1}{2}(16x^2+4y^2)^{-1/2}(8y) = \frac{4y}{\sqrt{16x^2+4y^2}}$$
+
+```{python}
+z = sy.sqrt(16*x**2 + 4*y**2)
+print(f"dz/dx = {sy.diff(z, x)}")
+print(f"dz/dy = {sy.diff(z, y)}")
+```
+
+### Part C
+
+$$g(x,y) = \frac{3x^2}{6y+2}$$
+
+$$\frac{\partial g}{\partial x} = \frac{6x}{6y+2}$$
+
+$$\frac{\partial g}{\partial y} = \frac{(-1)(3x^2)(6)}{(6y+2)^2} = \frac{-18x^2}{(6y+2)^2}$$
+
+```{python}
+g = 3*x**2 / (6*y+2)
+print(f"dg/dx = {sy.diff(g, x)}")
+print(f"dg/dy = {sy.diff(g, y)}")
+```
+
+## Question 5
+
+$$f(x,y) = \frac{2x^3}{y^2} + sin(x^3y)$$
+
+$$f_x(x,y) = \frac{6x^2}{y^2} + 3x^2y\ cos(x^3y)$$
+
+$$f_y(x,y) = \frac{-4x^3}{y^3} + x^3cos(x^3y)$$
+
+$$f_{xx}(x,y) = \frac{12x}{y^2} + 3x^2y(-1)sin(x^3y)(3x^2y) + cos(x^3y)(6xy) = \frac{12x}{y^2} - 9x^4y^2sin(x^3y) + 6xycos(x^3y)$$
+
+$$f_{yy}(x,y) = \frac{12x^3}{y^4} - x^6sin(x^3y)$$
+
+$$f_{xy}(x,y) = \frac{-12x^2}{y^3} - 3x^5ysin(x^3y) + 3x^2cos(x^3y)$$
+
+```{python}
+f = 2*x**3 / y**2 + sy.sin(x**3*y)
+print(f"df/dx = {sy.diff(f, x)}")
+print(f"df/dy = {sy.diff(f, y)}")
+print(f"d**2 f / dx**2 = {sy.diff(sy.diff(f, x), x)}")
+print(f"d**2 f / dy**2 = {sy.diff(sy.diff(f, y), y)}")
+print(f"d**2 f / dxdy = {sy.diff(sy.diff(f, x), y)}")
+```

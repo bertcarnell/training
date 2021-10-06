@@ -1,0 +1,300 @@
+---
+title: "Weekly Assignment 6"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+x_0 = sy.Symbol('x_0', real = True)
+y_0 = sy.Symbol('y_0', real = True)
+```
+
+## Question 1
+
+```{python results='asis'}
+w = 3*x**2*y + 4*x**3*y*z**2
+print(f"$$w = {sy.latex(w)}$$")
+print(f"$$dw = ({sy.latex(sy.diff(w,x))}) dx + ({sy.latex(sy.diff(w,y))}) dy + ({sy.latex(sy.diff(w,z))}) dz$$")
+```
+
+## Question 2
+
+### Part A
+
+```{python}
+w = x**3*y**2 - 5/y +y*z**2
+xp = r**2 + 6*s
+yp = r/4/s**5
+zp = 3*r - 2*s
+```
+
+$$\frac{\partial w}{\partial r} = \frac{\partial w}{\partial x} \frac{\partial x}{\partial r} +
+\frac{\partial w}{\partial y} \frac{\partial y}{\partial r} +
+\frac{\partial w}{\partial z} \frac{\partial z}{\partial r}$$
+
+### Part B
+
+```{python results='asis'}
+f = (sy.diff(w,x))*(sy.diff(xp,r)) + (sy.diff(w,y))*(sy.diff(yp,r)) + (sy.diff(w,z))*(sy.diff(zp,r))
+print("$$\\frac{\\partial w}{\\partial r} = " + sy.latex(f) + "$$")
+```
+
+### Part C
+
+```{python results='asis'}
+print("$$\\frac{\\partial w}{\\partial r}\Bigr|_{r=2,s=-1} = " + str(f.subs(x,xp).subs(y,yp).subs(z,zp).subs(r,2).subs(s,-1)) + "$$")
+```
+
+## Question 3
+
+### Part A
+
+A vector in the direction of the greatest rate of increase
+
+```{python results="asis"}
+f = x**3*y**2 - 4*y**3
+gradf = sy.diff(f, x)*N.i + sy.diff(f, y)*N.j
+gradf_point = gradf.subs(x,2).subs(y,-1)
+print("$$\\nabla f = " + sy.latex(gradf) + "$$")
+print("$$\\nabla f \Bigr|_{2,-1} = " + sy.latex(gradf_point) + "$$")
+```
+
+### Part B
+
+The greatest rate of increase
+
+```{python results="asis"}
+print("$$||\\nabla f||_{2,-1} = " + sy.latex(gradf_point.magnitude()) + "$$")
+```
+
+### Part C
+
+Vector in the direction of the greatest rate of decrease
+
+```{python results="asis"}
+print("$$-\\nabla f \Bigr|_{2,-1} = " + sy.latex(-gradf_point) + "$$")
+```
+
+### Part D
+
+```{python results="asis"}
+v = -3*N.i + 5*N.j
+print("$$D_v f = \\frac{\\nabla f \cdot v}{||v||} = " + sy.latex(gradf_point.dot(v)) + "$$")
+```
+
+## Question 4
+
+```{python results="asis"}
+f = 2*sy.sqrt(x**2 + y**2)
+v = 7*N.i - 5*N.j
+gradf = sy.diff(f,x)*N.i + sy.diff(f,y)*N.j
+print("$$f = " + sy.latex(f) + "$$")
+print("$$v = " + sy.latex(v) + "$$")
+print("$$\\nabla f = " + sy.latex(gradf) + "$$")
+print("$$D_v f = \\frac{\\nabla f \cdot v}{||v||} = " + sy.latex(gradf.dot(v.normalize())) + "$$")
+print("$$D_v f = \\frac{\\nabla f \cdot v}{||v||} \Bigr|_{4,-3} = " + sy.latex(gradf.dot(v.normalize()).subs(x,4).subs(y,-3)) + "$$")
+```
+
+## Question 5
+
+```{python results="asis"}
+g = 3*x*z**2 + 2*y**2*z**3
+a = 4*N.i + 2*N.j - 3*N.k
+gradg = sy.diff(g,x)*N.i + sy.diff(g,y)*N.j + sy.diff(g,z)*N.k
+print("$$g = " + sy.latex(g) + "$$")
+print("$$a = " + sy.latex(a) + "$$")
+print("$$\\nabla g = " + sy.latex(gradg) + "$$")
+print("$$D_a g = \\frac{\\nabla g \cdot a}{||a||} = " + sy.latex(gradg.dot(a) / a.magnitude()) + "$$")
+print("$$D_a g = \\frac{\\nabla g \cdot a}{||a||} \Bigr|_{4,-2,-1} = " + sy.latex(gradg.dot(a.normalize()).subs(x,4).subs(y,-2).subs(z,-1)) + "$$")
+```
+
+## Question 6
+
+```{python results="asis"}
+f = 2*sy.sqrt(x**2 + y**2)
+print("$$f = " + sy.latex(f) + "$$")
+print("$$z-f(x_0, y_0) = " + sy.latex(sy.diff(f,x).subs(x,x_0).subs(y,y_0)*(x-x_0) + sy.diff(f,y).subs(x,x_0).subs(y,y_0)*(y-y_0)) + "$$")
+print("$$z = " + sy.latex(f.subs(x,4).subs(y,-3) + sy.diff(f,x).subs(x,4).subs(y,-3)*(x - 4) + sy.diff(f,y).subs(x,4).subs(y,-3)*(y+3)) + "$$")
+l = (4*N.i - 3*N.j + 10*N.k) + (sy.diff(f,x).subs(x,4).subs(y,-3)*N.i + sy.diff(f,y).subs(x,4).subs(y,-3)*N.j - N.k)*t
+print("$$l(t) = " + sy.latex(l) + "$$")
+```
+
+
+```{r warnings=FALSE}
+f <- function(x,y) 2*sqrt(x^2+y^2)
+x <- seq(-10, 10, length=50)
+y <- seq(-10, 10, length=50)
+X <- expand.grid(x, y)
+names(X) <- c("x", "y")
+X$z <- f(X$x, X$y)
+tangent <- function(x,y) 8*x/5 - 6*y/5
+X$tan <- tangent(X$x, X$y)
+normal <- function(t) c(4+8/5*t, -3-6/5*t, 10-t)
+Y <- as.data.frame(t(sapply(seq(-10,10,length=21), normal)))
+names(Y) <- c("x", "y", "z")
+
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlab="x", ylab="y", zlab="z")
+sp1$points3d(X$x, X$y, X$tan, col = "blue")
+sp1$points3d(Y$x, Y$y, Y$z, col = "red")
+
+par(mar = c(5,4,4,2))
+plot(x, f(x, -3), xlab="x with y = -3", ylab="z", type="l")
+points(x, tangent(x, -3), col = "blue", type="l", lwd=3)
+points(Y$x, Y$z, col="red", type="l")
+
+plot(y, f(4, y), xlab="y with x = 4", ylab="z", type="l")
+points(y, tangent(4, y), col = "blue", type="l", lwd=3)
+points(Y$y, Y$z, col="red", type="l")
+```
+
+
+## Question 7
+
+```{python results = "asis"}
+f = -1/2*sy.sqrt(-x**3 + 2*x*y**2 - 24)
+print("$$f = " + sy.latex(f) + "$$")
+print("$$z-f(x_0, y_0) = " + sy.latex(sy.diff(f,x).subs(x,x_0).subs(y,y_0)*(x-x_0) + sy.diff(f,y).subs(x,x_0).subs(y,y_0)*(y-y_0)) + "$$")
+print("$$z = " + sy.latex(f.subs(x,2).subs(y,3) + sy.diff(f,x).subs(x,2).subs(y,3)*(x - 2) + sy.diff(f,y).subs(x,2).subs(y,3)*(y-3)) + "$$")
+```
+
+```{r  warnings=FALSE}
+f <- function(x,y) -0.5*sqrt(-x^3 + 2*x*y*y - 24)
+x <- seq(-10, 10, length=100)
+y <- seq(-10, 10, length=100)
+X <- expand.grid(x, y)
+names(X) <- c("x", "y")
+X$z <- f(X$x, X$y)
+tangent <- function(x,y) -0.75*x-3*y+9.5
+X$tan <- tangent(X$x, X$y)
+
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlab="x", ylab="y", zlab="z")
+sp1$points3d(X$x, X$y, X$tan, col = "blue")
+
+par(mar = c(5,4,4,2))
+plot(x, f(x,3), xlab="x with y = 3", ylab="z", type="l")
+points(x, tangent(x,3), col = "blue", type="l", lwd=3)
+
+plot(y, f(2,y), xlab="y with x = 2", ylab="z", type="l")
+points(y, tangent(2,y), col = "blue", type="l", lwd=3)
+```
+
+## Question 8
+
+$$x^2+4y^2-z^2 = 28$$
+
+$$z = \pm \sqrt{x^2+4y^2-28}$$
+
+$$\frac{\partial z}{\partial x} = \pm \frac{x}{\sqrt{x^2+4y^2-28}}$$
+
+$$\frac{\partial z}{\partial y} = \pm \frac{4y}{\sqrt{x^2+4y^2-28}}$$
+
+Tangent plane at $(a,b,c)$
+
+$$z = c + \frac{\partial z}{\partial x}|_{a,b,c} (x-a) + \frac{\partial z}{\partial y}|_{a,b,c} (y-b)$$
+
+For positive $z$,
+
+$$z_+ = c + \frac{a(x-a)}{\sqrt{a^2+4b^2-28}} + \frac{4b(y-b)}{\sqrt{a^2+4b^2-28}}$$
+
+For negative $z$,
+
+$$z_- = c - \frac{a(x-a)}{\sqrt{a^2+4b^2-28}} - \frac{4b(y-b)}{\sqrt{a^2+4b^2-28}}$$
+
+In order for this plane to be tangent to the target plane, they must have the
+same coefficients on $x$ and $y$, but can be at a different level ($c$)
+
+$$z' = -2x+4y$$
+
+For positive $z$,
+
+$$\frac{a}{\sqrt{a^2+4b^2-28}} = -2,\ \ \frac{4b}{\sqrt{a^2+4b^2-28}} = 4$$
+
+$$\frac{a}{-2} = \frac{4b}{4},\ \ b = \frac{-a}{2},\ \ a = -4, \ \ b = 2, \ \ c = 2$$
+
+For negative $z$,
+
+$$\frac{-a}{\sqrt{a^2+4b^2-28}} = -2,\ \ \frac{-4b}{\sqrt{a^2+4b^2-28}} = 4$$
+
+$$\frac{-a}{-2} = \frac{-4b}{4},\ \ b = \frac{-a}{2},\ \ a = 4, \ \ b = -2, \ \ c = -2$$
+Therefore both $(-4,2,2)$ and $(4,-2,-2)$ have tangent planes that are parallel to $z+2x-4y=0$
+
+```{r  warnings=FALSE}
+f <- function(x,y) sqrt(x^2+4*y^2-28)
+fprime <- function(x,y) -1*f(x,y)
+x <- seq(-10, 10, length=100)
+y <- seq(-10, 10, length=100)
+X <- expand.grid(x, y)
+names(X) <- c("x", "y")
+X$z <- f(X$x, X$y)
+X$zprime <- fprime(X$x, X$y)
+# positive z
+tangent <- function(x,y) 2 + -2*(x+4) + 4*(y-2)
+X$tan <- tangent(X$x, X$y)
+
+tangent_prime <- function(x,y) -2 - 2*(x-4) + 4*(y+2)
+X$tan_prime <- tangent_prime(X$x, X$y)
+target <- function(x,y) -2*x + 4*y
+X$targ <- target(X$x, X$y)
+
+
+sp1 <- scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlab="x", ylab="y", zlab="z")
+sp1$points3d(X$x, X$y, X$tan, col = "blue")
+
+# positive z
+par(mar = c(5,4,4,2))
+plot(x, f(x,2), xlab="x with y = 2", ylab="z", type="l")
+points(x, tangent(x, 2), col = "blue", type="l", lwd=3)
+points(x, target(x, 2), col = "red", type="l")
+
+plot(y, f(-4,y), xlab="y with x = -4", ylab="z", type="l")
+points(y, tangent(-4, y), col = "blue", type="l", lwd=3)
+points(y, target(-4, y), col = "red", type="l")
+
+# negative z
+
+plot(x, fprime(x, -2), xlab="x with y = -2", ylab="z", type="l")
+points(x, tangent_prime(x, -2), col = "blue", type="l", lwd=3)
+points(x, target(x, -2), col = "red", type="l")
+
+plot(y, fprime(4, y), xlab="y with x = 4", ylab="z", type="l")
+points(y, tangent_prime(4,y), col = "blue", type="l", lwd=3)
+points(y, target(4, y), col = "red", type="l")
+
+```
+
+## Question 9
+
+$$y = g(x)$$ is continuous and differentiable
+
+### Part A
+
+if $g'(x) > 0$ for all $x$ on (4,7), then $g(x)$ is **increasing** for all $x$ on (4,7)
+
+### Part B
+
+if $g'(9) = 0$ and $g''(9) = 4$ then $g(x)$ has a **local minimum** at $x=9$
+
+### Part C
+
+if $g(1) \le g(x)$ for all $x$ in [-3,3], then $g(1)$ is the **global minimum** of $g(x)$ on $[-3,3]$
+

@@ -99,7 +99,7 @@ print("$$-\\nabla f \Bigr|_{2,-1} = " + sy.latex(-gradf_point) + "$$")
 
 ```{python results="asis"}
 v = -3*N.i + 5*N.j
-print("$$D_v f = \\frac{\\nabla f \cdot v}{||v||} = " + sy.latex(gradf_point.dot(v)) + "$$")
+print("$$D_v f = \\frac{\\nabla f \cdot v}{||v||} = " + sy.latex(gradf_point.dot(v.normalize())) + "$$")
 ```
 
 ## Question 4
@@ -140,7 +140,7 @@ print("$$l(t) = " + sy.latex(l) + "$$")
 ```
 
 
-```{r warnings=FALSE}
+```{r warning=FALSE}
 f <- function(x,y) 2*sqrt(x^2+y^2)
 x <- seq(-10, 10, length=50)
 y <- seq(-10, 10, length=50)
@@ -177,7 +177,7 @@ print("$$z-f(x_0, y_0) = " + sy.latex(sy.diff(f,x).subs(x,x_0).subs(y,y_0)*(x-x_
 print("$$z = " + sy.latex(f.subs(x,2).subs(y,3) + sy.diff(f,x).subs(x,2).subs(y,3)*(x - 2) + sy.diff(f,y).subs(x,2).subs(y,3)*(y-3)) + "$$")
 ```
 
-```{r  warnings=FALSE}
+```{r  warning=FALSE}
 f <- function(x,y) -0.5*sqrt(-x^3 + 2*x*y*y - 24)
 x <- seq(-10, 10, length=100)
 y <- seq(-10, 10, length=100)
@@ -238,7 +238,7 @@ $$\frac{-a}{\sqrt{a^2+4b^2-28}} = -2,\ \ \frac{-4b}{\sqrt{a^2+4b^2-28}} = 4$$
 $$\frac{-a}{-2} = \frac{-4b}{4},\ \ b = \frac{-a}{2},\ \ a = 4, \ \ b = -2, \ \ c = -2$$
 Therefore both $(-4,2,2)$ and $(4,-2,-2)$ have tangent planes that are parallel to $z+2x-4y=0$
 
-```{r  warnings=FALSE}
+```{r  warning=FALSE}
 f <- function(x,y) sqrt(x^2+4*y^2-28)
 fprime <- function(x,y) -1*f(x,y)
 x <- seq(-10, 10, length=100)
@@ -296,5 +296,6 @@ if $g'(9) = 0$ and $g''(9) = 4$ then $g(x)$ has a **local minimum** at $x=9$
 
 ### Part C
 
-if $g(1) \le g(x)$ for all $x$ in [-3,3], then $g(1)$ is the **global minimum** of $g(x)$ on $[-3,3]$
+if $g(1) \le g(x)$ for all $x$ in [-3,3], then $g(1)$ is the **global minimum** or 
+**absolute minimum** of $g(x)$ on $[-3,3]$
 

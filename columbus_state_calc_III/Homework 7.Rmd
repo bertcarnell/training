@@ -1,0 +1,410 @@
+---
+title: "Weekly Assignment 7"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+x_0 = sy.Symbol('x_0', real = True)
+y_0 = sy.Symbol('y_0', real = True)
+```
+
+## Question 1
+
+$$f(x,y) = x^2 + xy$$
+
+bounded by $y=x^2$ and $y=x+2$
+
+Find the intersection of the boundaries:
+
+$$x^2 = x + 2$$
+
+$$x^2 - x - 2 = 0$$
+
+$$(x-2)(x+1) = 0$$
+
+$x = 2, -1$ and $y = 4, 1$
+
+on $-1 \le x \le 2$, $x^2 \le y \le x + 2$
+
+$$f_x(x,y) = 2x + y$$
+
+$$f_y(x,y) = x$$
+
+$$f_{xx}(x,y) = 2$$
+
+$$f_{yy}(x,y) = 0$$
+
+$$f_{xy}(x,y) = 1$$
+
+Solve for critial points simultaneously
+
+$$f_x(x,y) = 0, \ \ \ f_y(x,y) = 0$$
+
+$$2x+y=0 \\
+  x = 0$$
+  
+Therefore, $f(x,y)$ has a critical point at $(0,0,0)$ 
+
+Second derivative test:
+
+$$D = f_{xx}f_{yy}-(f_{xy})^2 = 2*0-1 = -1$$
+
+which shows it is a saddle point
+
+Check the boundaries:
+
+$$f(x,y) = x^2 + x^3, \ \ \ y=x^2$$
+
+$$f_x(x,y) = 2x+3x^2 = x(2+3x) = 0, \ \ \ y=x^2$$
+
+$f_{xx}(x,y) = 2+6x$ is positive at $x=0$
+
+therfore there is a minimum along the boundary at $x = 0, x=-3/2$.  $f(0,0) = 0$ and $x=-3/2$ is outside the region
+
+$$f(x,y) = x^2 + x*(x+2) = 2x^2+2x, \ \ \ y = x+2$$
+
+$$f_x(x,y) = 4x+2 = 0, \ \ \ y=x+2$$
+
+$f_{xx}(x,y) = 4$ is positive
+
+Therefore there is a minimum along the boundary at $x=-1/2, y = 3/2, z=-1/2$
+
+$x=-1/2, y = 3/2, z=-1/2$ is the global minimum in the region.
+
+```{r}
+x <- seq(-0.99, 1.99, length=50)
+y1 <- x^2
+y2 <- x+2
+X <- data.frame(x=rep(x, each=100), y=NA, z=NA)
+for (i in seq_along(x))
+{
+  X$y[((i-1)*100 + 1):(i*100)] <- seq(y1[i], y2[i], length=50)
+}
+X$z <- X$x^2 + X$x*X$y
+
+scatterplot3d::scatterplot3d(x=X$x, y=X$y, z=X$z, xlab="x", ylab="y", zlab="z")
+```
+
+Checking the minimum over the region:  `r X[which.min(X$z),]`
+
+```{r}
+plot(x, x+2, type="l", col="blue", ylim=c(0, 4), xlab="x", ylab="y")
+points(x, x^2, type="l", col="red")
+
+ggplot(X, aes(x=x, y=y, col=z)) + geom_point() + scale_color_gradient(low = "blue", high = "red")
+```
+
+```{r}
+f <- function(x,y) x^2 + x*y
+
+plotf <- function(x0, y0, x1, x2, y1, y2, f)
+{
+  x <- seq(x1, x2, length=50)
+  plot(x, f(x, y0), type="l", xlab = paste0("x with y=", y0), ylab = "f(x,y)", col="blue")
+  points(x0, f(x0, y0), cex=1.5, col="red")
+  
+  y <- seq(y1, y2, length=50)
+  plot(y, f(x0, y), type="l", xlab = paste0("y with x=", x0), ylab = "f(x,y)", col="blue")
+  points(y0, f(x0, y0), cex=1.5, col="red")
+}
+
+plotf(0, 0, -1, 2, 0^2, 2+0, f)
+
+plotf(-1/2, 3/2, 3/2-2, sqrt(3/2), 1/4, 3/2, f)
+```
+
+
+## Question 2
+
+### Part A
+
+$$f(x,y) = \frac{1}{4}x^4-x^3-6xy+y^2$$
+
+$$f_x = x^3-3x^2-6y$$
+
+$$f_y = -6x+2y$$
+
+$$f_{xx} = 3x^2-6x$$
+
+$$f_{yy} = 2$$
+
+$$f_{xy} = -6$$
+
+$$D = f_{xx}f_{yy}-(f_{xy})^2 = 6x^2 -12x-36$$
+
+Solve:
+
+$$x^3-3x^2-6y = 0 \\
+  -6x+2y = 0$$
+  
+$$x^3-3x^2-(6)(3x) = 0$$
+
+$x=0,6,-3$ and $y=0,18,-9$
+
+$(0,0)$: $D < 0$, therefore saddle point
+
+$(6,18)$: $D>0$ and $f_{xx} > 0$, therefore local minimum
+
+$(-3,-9)$: $D>0$ and $f_{xx} > 0$, therefore local minimum
+
+```{r}
+f <- function(x,y) 1/4*x^4-x^3-6*x*y+y^2
+
+plotf(0, 0, -7, 7, -20, 20, f)
+plotf(6, 18, -7, 7, -20, 20, f)
+plotf(-3, -9, -7, 7, -20, 20, f)
+```
+
+### Part B
+
+$$f(x,y) = x^2y+2y^3+x^2+5y^2$$
+
+$$f_x = 2xy + 2x$$
+
+$$f_y = x^2+6y^2+10y$$
+
+$$f_{xx} = 2y+2$$
+
+$$f_{yy} = 12y+10$$
+
+$$f_{xy} = 2x$$
+
+$$D = f_{xx}f_{yy}-(f_{xy})^2 = (2y+2)(12y+10)-4x^2 = 4(y+1)(6y+5)-4x^2$$
+
+Solve:
+
+$$2xy+2x = 0 \\
+  x^2+6y^2+10y = 0$$
+
+Solutions to the first equation are $x=0\ \ \ \forall y$ and $y=-1\ \ \ \forall x$
+
+Substituting each into the second equation
+
+$x = 0$ therefore $6y^2+10y=0$ and $y=0, -10/6$
+
+$y=-1$ therefore $x^2-4=0$ $x=\pm2$
+
+Critical Points
+
+- $(0, 0)$: $D > 0$  $f_{xx} > 0$ therefore it is a local minimum
+- $(0, -5/3)$: $D=(4)(-2/3)(-5) > 0$ $f_{xx} < 0$ therefore it is a maximum
+- $(2, -1)$: $D < 0$ therefore it is a saddle point
+- $(-2, -1)$: $D < 0$ therefore it is a saddle point
+
+
+```{r}
+f <- function(x,y) x^2*y + 2*y^3 + x^2 + 5*y^2
+
+plotf(0, 0, -3, 3, -2, 2, f)
+plotf(0, -5/3, -3, 3, -2, 2, f)
+plotf(2, -1, -3, 3, -2, 2, f)
+plotf(-2, -1, -3, 3, -2, 2, f)
+```
+
+## Question 3
+
+$$V_0 = xyz$$
+
+$$A_{top} = xy$$
+
+$$A_{bottom} = xy$$
+
+$$A_{sides} = 2xz + 2yz$$
+
+$$C = f(x,y,x) = xy\alpha + xy\beta + (2xz + 2yz)\gamma$$
+
+$$g(x,y,z) = xyz - V_0 = 0$$
+
+$$\mathcal{L}(x,y,z,\lambda) = f(x,y,z) - \lambda g(x,y,z)$$
+
+finding $\mathcal{L}_x = \mathcal{L}_y = \mathcal{L}_z = 0$
+
+
+$$\mathcal{L}_x = y(\alpha+\beta) + 2\gamma z - \lambda yz = 0$$
+
+$$\mathcal{L}_y = x(\alpha+\beta) + 2\gamma z - \lambda xz = 0$$
+
+$$\mathcal{L}_z = 2\gamma (x+y) - \lambda xy = 0$$
+
+and $g(x,y,z) = V_0 - xzy = 0$
+
+$$y = \frac{-2 \gamma z}{(\alpha + \beta) - \lambda z}$$
+
+$$x = \frac{-2 \gamma z}{(\alpha + \beta) - \lambda z}$$
+
+$$-4 \gamma^2 z \frac{2}{(\alpha + \beta) - \lambda z} - \frac{4\lambda \gamma^2 z^2}{((\alpha + \beta) - \lambda z)^2} = 0$$
+
+$$2z[(\alpha+\beta) - \lambda z] + \lambda z^2 = 0$$
+
+$$2z(\alpha+\beta)-\lambda z^2 = 0$$
+
+$z=0$ or $z = \frac{2(\alpha+\beta)}{\lambda}$
+
+$$x = y = \frac{-2 \gamma 2 (\alpha+\beta)}{\lambda} \frac{1}{-(\alpha+\beta)} = \frac{4\gamma}{\lambda}$$
+
+$$\frac{16 \gamma^2}{\lambda^2} \frac{2(\alpha+\beta)}{\lambda} = V_0$$
+
+$$\frac{32 \gamma^2 (\alpha+\beta)}{V_0} = \lambda^3$$
+
+$$\lambda = (\frac{32 (10)^2 (12+4)}{8})^{1/3} = e^{log(6400)/3} $$
+
+$$x = y = \frac{40}{e^{log(6400)/3}} = 2.1544$$
+
+$$z = \frac{2(12+4)}{e^{log(6400)/3}} = 1.72355$$
+
+
+```{r}
+f <- function(x,y,z,a,b,g)
+{
+  x*y*a+x*y*b+2*x*z*g+2*y*z*g
+}
+
+X <- expand.grid(x=1:8, y=1:8, z=1:8)
+X$v <- with(X, x*y*z)
+ind <- which(X$v == 8)
+X <- X[ind,]
+X$f <- f(X$x, X$y, X$z, 12, 4, 10)
+X[which.min(X$f),]
+f(2.1544, 2.1544, 1.72335, 12, 4, 10)
+```
+
+## Question 4
+
+$$f(x,y)=x^2y^2$$
+
+$$x^2+y^2=8$$
+
+$$\mathcal{L}(x,y,z,\lambda) = f(x,y,z) - \lambda g(x,y,z)$$
+
+finding $\mathcal{L}_x = \mathcal{L}_y = 0$
+
+$$\mathcal{L} = x^2y^2-\lambda (x^2+y^2-8)$$
+
+$$\mathcal{L}_x = 2xy^2 - 2 \lambda x = 2x(y^2 - \lambda) = 0$$
+
+$$\mathcal{L}_y = 2x^2y - 2\lambda y = 2y(x^2-\lambda) = 0$$
+
+$$x^2+y^2-8=0$$
+
+$x=0$ or $y= \pm \sqrt{\lambda}$
+
+$y=0$ or $x= \pm \sqrt{\lambda}$
+
+Therefore for $x$ and $y$ greater than 0, $2 \lambda - 8 = 0$ and $\lambda = 4$
+
+The critical points are therefore: $(2, 2)$, $(2, -2)$, $(-2, 2)$, $(-2, -2)$
+
+$x=0$ and $y=0$ are not simultaneous solutions because of the constraints.
+
+plugging the constraint into $f$:  $f(x) = x^2(8-x^2)$, $f_x = 16x-4x^3$, $f_{xx} = 16-12x^2$
+which is $f_{xx} < 0$ at the critical points, therfore the critical points are maxima
+within the constraint.  $f(\pm 2, \pm 2) = 16$
+
+Notice that $x=0$ is a solution when plugging in the boundary condition into $f(x,y)$.  Therefore
+$x=0$ and $y = \pm \sqrt{8}$ is a solution, and $f_{xx} > 0$ so it is a minimum.  Similarly,
+we could have plugged in the boundary condition and created $f(y) = y^2(8-y^2)$.  Therefore,
+$y=0$ and $x = \pm \sqrt(8)$ is a solution, and $f_{yy} > 0$ so it is also a mimimum.
+$f(0, \pm \sqrt{8}) = 0$ and $f(\pm \sqrt{8}, 0) = 0$
+
+Alternatively
+
+$$f(r, \theta) = r^4 cos^2\theta sin^2\theta$$
+
+$$r^2 - 8 = 0$$
+
+$$\mathcal{L}(r, \theta) = r^4 cos^2\theta sin^2\theta - \lambda (r^2 - 8)$$
+
+$$\mathcal{L}_r = 4r^3 cos^2\theta sin^2\theta - 2\lambda r = 0$$
+
+$$\mathcal{L}_{\theta} = r^4 [-2cos \theta sin^3\theta + 2cos^3\theta sin\theta] = 0$$
+
+therefore $r = \sqrt{8}$ and $\lambda = cos^2\theta sin^2\theta$ 
+and $cos \theta sin^3\theta  = cos^3\theta sin\theta$ or $cos^2\theta = sin^2\theta$
+which is true at $\pi/4$, $3\pi/4$, $5\pi/4$ and $7\pi/4$.  $f(r,\theta) = 8^2(1/2)(1/2) = 16$
+
+$\lambda = 0$ is also a solution when $\theta = 0,\ \pi/2,\ \pi,\ 3\pi/2$.  $f(r,\theta) = 0$
+
+## Question 5
+
+$$f(x,y,z) = x^2+2y^2+4z^2$$
+
+$$xyz=16\sqrt{2}$$
+
+$$\mathcal{L} = x^2+2y^2+4z^2 - \lambda(xyz - 16\sqrt{2})$$
+
+$$\mathcal{L}_x = 2x - \lambda yz = 0$$
+
+$$\mathcal{L}_y = 4y - \lambda xz = 0$$
+
+$$\mathcal{L}_z = 8z - \lambda xy = 0$$
+
+
+$$4y-\lambda(\frac{\lambda}{2}yz)z = y(4-\frac{\lambda^2z^2}{2}) = 0$$
+
+$$8z-\lambda(\frac{\lambda}{2}yz)y = z(8-\frac{\lambda^2y^2}{2}) = 0$$
+
+$z = \sqrt{\frac{8}{\lambda^2}}$ and $y=\sqrt{\frac{16}{\lambda^2}}$
+
+$x \frac{\sqrt{8}}{\lambda} \frac{4}{\lambda} = 16\sqrt{2}$ therefore $x=2\lambda^2$
+
+$2x-\lambda yz = 0 = 4\lambda^2 - \frac{4\sqrt{8}}{\lambda}$
+
+$\lambda^3 = \sqrt{8}$ and $\lambda = 8^{1/6}$
+
+- $x = (2)8^{1/3} = 4$
+- $y = \frac{4}{8^{1/6}} = 2\sqrt{2}$
+- $z = \frac{2\sqrt{2}}{8^{1/6}} = 2$
+
+## Question 6
+
+$$x^2+6y^2+3xy=90$$
+
+since we want the greatest x coordinate, maximize $f(x,y) = x$
+
+$$\mathcal{L} = x - \lambda(90 - x^2 - 6y^2 - 3xy)$$
+
+$$\mathcal{L}_x = 1 + 2\lambda x + 3\lambda y = 0$$
+
+$$\mathcal{L}_y = 12\lambda y + 3\lambda x = 0$$
+
+$x = -4y$
+
+$$1 - 8 \lambda y + 3 \lambda y = 1 - 5 \lambda y = 0$$
+
+$y = \frac{1}{5\lambda}$
+
+$$90 - \frac{16}{25\lambda^2} - \frac{6}{25\lambda^2} + \frac{12}{25\lambda^2} = 90 - \frac{10}{25\lambda^2} = 0$$
+
+$\lambda^2 = \frac{1}{(9)(25)}$ and $\lambda = \pm \frac{1}{15}$
+
+$y = \pm 3$ but choose $y = -3$ to maximize $x$
+
+$x = 12$
+
+
+
+
+
+

@@ -1,0 +1,229 @@
+---
+title: "Weekly Assignment 9"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+```
+
+## Question 1
+
+First Quadrant
+
+$$y=x^2$$ 
+
+$$y=9$$
+
+$$\rho(x,y) = x^2y$$
+
+Mass
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(x**2*y, (y, x**2, 9), (x, 0, 3))
+inner = sy.integrate(x**2*y, (y, x**2, 9))
+
+print("$$\\large \\int_{x=0}^3 \\int_{y=x^2}^9 x^2y dy dx = \\int_{x=0}^3 " + sy.latex(inner) + " dx = " + str(ans) + "$$")
+```
+
+Moments
+
+```{python echo=FALSE, results="asis"}
+M_y = sy.integrate(x*x**2*y, (y, x**2, 9), (x, 0, 3))
+M_x = sy.integrate(y*x**2*y, (y, x**2, 9), (x, 0, 3))
+
+print("$$\\large M_y = \\int_{x=0}^3 \\int_{y=x^2}^9 x^3y dy dx = " + str(M_y) + "$$")
+
+print("$$\\large M_x = \\int_{x=0}^3 \\int_{y=x^2}^9 x^2y^2 dy dx = " + str(M_x) + "$$")
+```
+
+Center of Mass
+
+```{python echo=FALSE, results="asis"}
+print("$$\\bar{x} = " + str(M_y/ans) + "$$")
+print("$$\\bar{y} = " + str(M_x/ans) + "$$")
+```
+
+## Question 1B
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(r**2 * sy.cos(theta), (r, 0, 1-sy.sin(theta)), (theta, 0, sy.pi))
+inner = sy.integrate(r**2 * sy.cos(theta), (r, 0, 1-sy.sin(theta)))
+
+print("$$\\large \\int_{\\theta = 0}^{\\pi} \\int_0^{1-sin(\\theta)} r^2 cos(\\theta) dr d\\theta = \\int_{\\theta=0}^{\\pi} " +
+      sy.latex(inner) + "d\\theta = " + str(ans) + "$$")
+```
+
+## Question 2
+
+$$\large \int_{-3}^{2} \int_{x^2}^{6-x} f(x,y) dy dx$$
+
+```{r}
+x <- seq(-3, 2, length=200)
+xy <- sapply(x, function(x) seq(x^2, 6-x, length=100))
+X <- data.frame(x = rep(x, each=100),
+                y = c(xy))
+plot(X$x, X$y, xlab = "x", ylab = "y")
+```
+
+$$\large = \int_{y=0}^4 \int_{x = -\sqrt{y}}^{\sqrt{y}} f(x,y) dx dy + \int_{y=4}^9 \int_{x = -\sqrt{y}}^{6-y} f(x,y) dx dy$$
+
+check
+
+```{python}
+sy.integrate(x*y, (x, -1*sy.sqrt(y), sy.sqrt(y)), (y, 0, 4)) + sy.integrate(x*y, (x, -1*sy.sqrt(y), 6-y), (y, 4, 9))
+sy.integrate(x*y, (y, x**2, 6-x), (x, -3, 2))
+```
+
+## Question 3
+
+$$\large x = y^2-2$$
+
+$$\large y-x = 4$$
+
+$$\large y=-1,\ \ y=4$$
+
+$$\large \int_{y=-1}^4 \int_{x=y-4}^{y^2-2} dx dy$$
+
+```{python results="asis", echo=FALSE}
+ans = sy.integrate(1, (x, y-4, y**2-2), (y, -1, 4))
+print("$$\large \int_{y=-1}^4 \int_{x=y-4}^{y^2-2} dx dy = " + str(ans) + "$$")
+```
+
+## Question 4
+
+$$\large 2x+y+z=4$$
+
+Above the xy plane
+
+$$\large f(x,y) = 4 - 2x - y$$
+
+```{python results="asis", echo=FALSE}
+ans = sy.integrate(4 - 2*x - y, (y, 0, 4-2*x), (x, 0, 2))
+print("$$\\large \\int_{x=0}^2 \\int_{y=0}^{4-2x} 4-2x-y dy dx = " + str(ans) + "$$")
+```
+
+## Question 5
+
+$$\large r = 2 - 2sin(\theta)$$
+
+```{r}
+theta <- seq(0, 2*pi, length=100)
+r <- 2 - 2*sin(theta)
+
+x <- r*cos(theta)
+y <- r*sin(theta)
+
+plot(x, y, type="l", col="red")
+```
+
+```{python results="asis", echo=FALSE}
+ans = sy.integrate(r, (r, 0, 2-2*sy.sin(theta)), (theta, 0, 2*sy.pi))
+inner = sy.integrate(r, (r, 0, 2-2*sy.sin(theta)))
+
+print("$$\\large \\int_{\\theta = 0}^{2*\pi} \\int_{r=0}^{2-2sin(\\theta)} r dr d\\theta = \\int_{\\theta = 0}^{2*\pi}" +
+       sy.latex(inner) + " d\\theta = " + sy.latex(ans) + "$$")
+```
+
+## Question 6
+
+$$r = 1$$
+
+$$r = 2sin(\theta)$$
+
+Find the intersections:
+
+$$1 = 2sin(\theta)$$
+
+$$\theta = \frac{\pi}{6},\ \ \frac{5\pi}{6}$$
+
+```{python results="asis", echo=FALSE}
+ans = sy.integrate(r, (r, 1, 2*sy.sin(theta)), (theta, sy.pi/6, 5*sy.pi/6))
+inner = sy.integrate(r, (r, 1, 2*sy.sin(theta)))
+
+print("$$\\large \\int_{\\theta=\\pi/6}^{5\\pi/6} \\int_{r=1}^{2sin(\\theta)} r dr d\\theta = \\int_{\\theta=\\pi/6}^{5\\pi/6}" +
+      sy.latex(inner) + " d\\theta = " + sy.latex(ans) + "$$")
+```
+
+## Question 7
+
+$$\large \int \int_{x^2+y^2=1} \frac{1}{\sqrt{4-x^2-y^2}} dA$$
+
+
+$$\large = \int_{r=0}^{1} \int_{\theta=0}^{\pi/2} \frac{r}{\sqrt{4-r^2}} dr d\theta$$
+
+check with Monte Carlo integration (not exactly equal)
+
+```{python}
+#sy.integrate(1/sy.sqrt(4-x**2-y**2), (y, 0, sy.sqrt(1-x**2)), (x, 0, 1))
+sy.integrate(r/sy.sqrt(4-r**2), (theta, 0, sy.pi/2), (r, 0, 1)).evalf()
+```
+
+```{r}
+set.seed(1976)
+N <- 200000
+X <- data.frame(x = runif(N),
+                y = runif(N),
+                z = runif(N))
+temp <- apply(X, 1, function(w) if (w["x"]^2 + w["y"]^2 <= 1 & w["z"] < 1/sqrt(4-w["x"]^2-w["y"]^2)) 
+  return(TRUE) else return(FALSE))
+sum(temp)/N
+```
+
+## Question 8
+
+$$\large \int_{x=-3}^3 \int_{y=0}^{\sqrt{9-x^2}} \frac{x+2y}{x^2+y^2} dy dx$$
+
+$$\large \int_{r=0}^{3} \int_{\theta=0}^{\pi} \left(cos(\theta) + 2sin(\theta)\right) dr d\theta$$ 
+
+check
+
+```{python}
+sy.integrate((x+2*y)/(x**2+y**2), (y, 0, sy.sqrt(9-x**2)), (x, -3, 3))
+sy.integrate(sy.cos(theta) + 2*sy.sin(theta), (theta, 0, sy.pi), (r, 0, 3))
+```
+
+
+## Question 9
+
+$$z=x^2+2y^2$$
+
+$$z=12-2x^2-y^2$$
+
+Intersection
+
+$$x^2+2y^2 = 12-2x^2-y^2$$
+
+$$0 = 4 - x^2-y^2$$
+
+$$f(x,y) = 12 - 3x^2 - 3y^2$$
+
+$$f(r,\theta) = 12 - 3r^2$$
+
+```{python results="asis", echo=FALSE}
+ans = sy.integrate(r*(12-3*r**2), (r, 0, 2), (theta, 0, 2*sy.pi))
+print("$$\\int_{0}^{2\\pi} \\int_{0}^{2} r(12-3r^2) dr d\\theta = " + sy.latex(ans) + "$$")
+```
+

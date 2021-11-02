@@ -1,0 +1,128 @@
+---
+title: "Weekly Assignment 9"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+```
+
+## Question 1
+
+First Quadrant
+
+$$\large y=x^2$$ 
+
+$$\large y=9$$
+
+$$\large \rho(x,y) = x^2y$$
+
+Mass
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(x**2*y, (y, x**2, 9), (x, 0, 3))
+inner = sy.integrate(x**2*y, (y, x**2, 9))
+
+print("$$\\large \\int_{x=0}^3 \\int_{y=x^2}^9 x^2y dy dx = \\int_{x=0}^3 " + sy.latex(inner) + " dx = " + str(ans) + "$$")
+```
+
+Moments
+
+```{python echo=FALSE, results="asis"}
+M_y = sy.integrate(x*x**2*y, (y, x**2, 9), (x, 0, 3))
+M_x = sy.integrate(y*x**2*y, (y, x**2, 9), (x, 0, 3))
+
+print("$$\\large M_y = \\int_{x=0}^3 \\int_{y=x^2}^9 x^3y dy dx = " + str(M_y) + "$$")
+
+print("$$\\large M_x = \\int_{x=0}^3 \\int_{y=x^2}^9 x^2y^2 dy dx = " + str(M_x) + "$$")
+```
+
+Center of Mass
+
+```{python echo=FALSE, results="asis"}
+print("$$\\large \\bar{x} = " + str(M_y/ans) + "$$")
+print("$$\\large \\bar{y} = " + str(M_x/ans) + "$$")
+```
+
+## Question 2
+
+$$\large f(x,y) = 16-x^2-y^2$$
+
+Intersects with the xy plane at
+
+$$\large f(x,y) = 0 = 16-x^2-y^2$$
+
+$$\large f(r,\theta) = 16-r^2$$
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(r*(16-r**2), (r, 0, 4), (theta, 0, 2*sy.pi))
+inner = sy.integrate(r*(16-r**2), (r, 0, 4))
+
+print("$$\\large \\int_{\\theta = 0}^{2\\pi} \\int_{r=0}^{4)} r(16-r^2) d\\theta dr = \\int_{\\theta=0}^{2\\pi} " +
+      sy.latex(inner) + "d\\theta = " + str(ans) + "$$")
+```
+
+## Question 3
+
+$$\large \int_0^1 \int_0^x \int_0^{x-2y} x^2dz dy dx$$
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(x**2, (z, 0, x-2*y), (y, 0, x), (x, 0, 1))
+inner1 = sy.integrate(x**2, (z, 0, x-2*y))
+inner2 = sy.integrate(x**2, (z, 0, x-2*y), (y, 0, x))
+print("$$\\large \\int_0^1 \\int_0^x \\int_0^{x-2y} x^2 dzdydx = \\int_0^1 \\int_0^x " + sy.latex(inner1) + "dydx = \\int_0^1 " + sy.latex(inner2) + "dx = " + sy.latex(ans) + "$$")
+```
+
+## Question 4
+
+$$\large 3x+y+4z=12$$
+
+$$\large x=0\ \ \ y=0\ \ \ z=0$$
+
+Intersection on boundary:
+
+$$\large \int_{x=0}^4 \int_{y=0}^{12} \int_{z=0}^3 (12-3x-y-4z) dzdydx$$  
+
+```{python echo=FALSE, results="asis"}
+ans = sy.integrate(3*x+y+4*z-12, (z, 0, 3), (y, 0, 12), (x, 0, 3))
+inner1 = sy.integrate(3*x+y+4*z-12, (z, 0, 3))
+inner2 = sy.integrate(3*x+y+4*z-12, (z, 0, 3), (y, 0, 12))
+print("$$\\large \\int_{x=0}^4 \\int_{y=0}^{12} \\int_{z=0}^3 (12-3x-y-4z) dzdydx = \\int_{x=0}^4 \\int_{y=0}^{12} " + sy.latex(inner1) + "dydx = \\int_{x=0}^4 " + sy.latex(inner2) + "dx = " + sy.latex(ans) + "$$")
+```
+
+## Question 5
+
+$$\large x+2y+3z=6$$
+
+$$\large x^2+y^2=4$$
+
+First quadrant
+
+$$\large r^2 = 4$$
+
+$$\large rcos(\theta)+2rsin(\theta)+3z=6$$
+
+$$\large \int_{r=0}^2 \int_{\theta=0}^{\pi/2} \int_{z=0}^2 r(rcos(\theta)+2rsin(\theta)+3z - 6) dz d\theta dr$$
+

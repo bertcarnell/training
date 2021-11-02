@@ -1,0 +1,104 @@
+---
+title: "Bee Problem"
+author: "Rob Carnell"
+date: "10/17/2021"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+```
+
+## Recall
+
+For projective motion where a projectile is launched with velocity $v_0$ at an 
+angle $\theta$ to the horizontal with gravity in the $y$ direction, then
+
+$$ r(t) = v_0 cos(\theta)t \hat{i} + (\frac{-1}{2}gt^2 + v_0 sin(\theta) t + h_0) \hat{j}$$
+
+## Problem
+
+Bee has position 
+
+$$r_{alive}(t) = 5cos(t) \hat{i} + 5sin(t) \hat{j} + 2t \hat{k}$$
+
+Bee therefore has velocity
+
+$$v_{alive}(t) = -5sin(t) \hat{i} + 5cos(t) \hat{j} + 2 \hat{k}$$
+
+when bee dies at $t=10$
+
+$$r_{10} = r_{alive}(10) = 5cos(10) \hat{i} + 5sin(10) \hat{j} + 2(10) \hat{k} = r_{x_{10}} \hat{i} + r_{y_{10}} \hat{j} + r_{z_{10}} \hat{k}$$
+
+$$v_{10} = v_{alive}(10) = -5sin(10) \hat{i} + 5cos(10) \hat{j} + 2 \hat{k} = v_{x_{10}} \hat{i} + v_{y_{10}} \hat{j} + v_{z_{10}} \hat{k}$$ 
+
+Now, for ease of calculation, reset time when the bee dies $t_{free\ fall} = t_{alive} - 10$
+
+In free fall,
+
+$$r_{free}(t) = (r_{x_{10}} + v_{x_{10}} t) \hat{i} + (r_{y_{10}} + v_{y_{10}} t) \hat{j} + (r_{z_{10}} + v_{z_{10}} t - \frac{1}{2}gt^2) \hat{k}$$
+
+The bee hits the $xy$ plane when $r_{free} \cdot \hat{k} = 0$
+
+$$r_{z_{10}} + v_{z_{10}} t - \frac{1}{2}gt^2 = 0$$
+
+$$t_{xy\ plane}=\frac{-v_{z_{10}} \pm \sqrt{v_{z_{10}}^2 - 4(-1/2)(g)r_{z_{10}}}}{2(-1/2)(g)}$$
+
+```{r}
+rx10 = 5*cos(10)
+ry10 = 5*sin(10)
+rz10 = 20
+r <- function(t) c(5*cos(t), 5*sin(t), 2*t)
+stopifnot(all(c(rx10, ry10, rz10) == r(10)))
+
+vx10 = -5*sin(10)
+vy10 = 5*cos(10)
+vz10 = 2
+v <- function(t) c(-5*sin(t), 5*cos(t), 2)
+stopifnot(all(c(vx10, vy10, vz10) == v(10)))
+
+t_xy = c((-vz10 + sqrt(vz10^2 - 4*(-0.5)*(32)*(rz10)))/2/-0.5/32,
+         (-vz10 - sqrt(vz10^2 - 4*(-0.5)*(32)*(rz10)))/2/-0.5/32)
+t_xy = t_xy[2] # positive time
+
+r_dead <- function(t) c(rx10 + vx10*t,
+                        ry10 + vy10*t,
+                        rz10 + vz10*t - 0.5*32*t^2)
+stopifnot(all(r_dead(0) == r(10)))
+```
+
+$t_{xy\ plane} =$ `r t_xy`
+
+The bee impacts the $xy$ plane at $(x,y,z) =$ `r paste0("(", paste(round(r_dead(t_xy), 3), collapse=", "), ")")`
+
+```{r}
+tim <- seq(0, 10, length = 500)
+
+X <- t(sapply(tim, r))
+
+tim2 <- seq(0, t_xy, length = 100)
+X <- rbind(X, t(sapply(tim2, r_dead)))
+X <- as.data.frame(X)
+X$tim <- c(tim, tim2 + 10)
+X$col <- c(rep("blue", length(tim)),
+           rep("red", length(tim2)))
+names(X) <- c("x", "y", "z", "t", "col")
+
+scatterplot3d::scatterplot3d(X$x, X$y, X$z, xlab="x", ylab="y", zlab="z",
+                             color = X$col)
+
+par(mar=c(5,4,4,2))
+plot(X$x, X$z, col = X$col, xlab="x", ylab = "z")
+
+plot(X$y, X$z, col = X$col, xlab="y", ylab = "z")
+
+plot(X$x, X$y, col = X$col, xlab="x", ylab = "y")
+
+```
+
+
+

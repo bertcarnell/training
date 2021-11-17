@@ -1,0 +1,234 @@
+---
+title: "Weekly Assignment 11"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+phi = sy.Symbol('phi', real = True)
+rho = sy.Symbol('rho', real = True)
+```
+
+## Question 1
+
+$$\large F = 2xy^2\hat{i} - 5x^2z^3\hat{j} + 3y^2z\hat{k}$$
+
+### A
+
+```{python results="asis", echo=FALSE}
+F = 2*N.x*N.y**2*N.i - 5*N.x**2*N.z**3 * N.j + 3*N.y**2*N.z*N.k 
+print("$$" + sy.latex(sv.divergence(F)) + "$$")
+```
+
+### B
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sv.curl(F)) + "$$")
+```
+
+## Question 2
+
+$$\large F = (9x^2+3y^2+5y)\hat{i} + (6xy -6y^2+5x+2)\hat{j}$$
+
+$F$ is a conservative field if and only if $$\nabla f = F$$
+
+$F$ is defined everywhere in $\mathbb{R}^3$
+
+If $F$ is conservative, then the $curl(F) = 0$
+
+```{python results="asis", echo=FALSE}
+F = (9*N.x**2 + 3*N.y**2 + 5*N.y)*N.i + (6*N.x*N.y - 6*N.y**2 +5*N.x+2)*N.j 
+print("$$" + sy.latex(sv.curl(F)) + "$$")
+```
+
+Find the potential $f$
+
+$$\large \frac{\partial f}{\partial x} = F \cdot \hat{i} = 9x^2+3y^2+5y$$
+
+$$\large f = 3x^3+3xy^2+5xy+g(y)$$
+
+$$\large \frac{\partial f}{\partial y} = F \cdot \hat{j} = 6xy -6y^2+5x+2$$
+
+$$\large f = 3xy^2 - 2y^3+5xy+2y+h(x)$$
+
+Therefore
+
+$$\large f = 3x^3+3xy^2+5xy-2y^3+2y+C$$
+
+Since $f$ can be found, $F$ is conservative
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sv.scalar_potential(F, N)) + "$$")
+
+print("Is F conservative? " + str(sv.is_conservative(F)))
+```
+
+## Question 3
+
+$$\large \int_C (x^3+y) ds$$
+
+$$\large r(t)=3t\hat{i}+t^3\hat{j}\ \ \ \ 0 \le t \le 2$$
+
+$$\large \int_C f(r(t)) ds = \int_a^b f(r(t))||r'(t)|| dt$$
+
+$$\large \int_C (x^3+y) ds = \int_0^2 \left((3t)^3 + t^3\right) \sqrt{9+9t^4} dt = \int_0^2 28t^3 \sqrt{9+9t^4} dt$$
+
+$$\large =\frac{28}{36}*\frac{2}{3}(9+9t^4)^{3/2} \big|_0^2 = \frac{14}{27}\left( 153^{3/2} - 27\right) = 14*17^{3/2} - 14 = 238\sqrt{17} - 14$$
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sy.integrate(28*t**3*sy.sqrt(9+9*t**4), (t, 0, 2))) + "$$")
+C = sy.Curve([3*t, t**3], (t, 0, 2))
+print("$$" + sy.latex(sy.line_integrate(x**3 + y, C, [x, y])) + "$$")
+```
+
+## Question 4
+
+$$\large \int_C xy^2 dx + x^3 dy$$
+
+$$\large r(t) = 2t\hat{i} + (t^2-3)\hat{j} \ \ \ \ \ -1 \le t \le 1$$
+
+$$\large \int_C xy^2 dx + x^3 dy = \int_{-1}^1 (2t) \left( t^2-3 \right)^2 (2)dt + \int_{-1}^1 (2t)^3 (2t) dt$$
+
+$$\large =\int_{-1}^1 4t \left( t^2-3 \right)^2 dt + \int_{-1}^1 16t^4 dt = \frac{2}{3}(t^2-3)^3 \big|_{-1}^1 + \frac{16}{5} t^5 \big|_{-1}^1$$
+
+$$\large =\frac{2}{3} \left[ (-2)^3 - (-2)^3 \right] + \frac{16}{5} \left[ 1-(-1) \right] = \frac{32}{5}$$
+
+Using python
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sy.integrate(2*t*(t**2-3)**2*2 + (2*t)**4, (t, -1, 1))) + "$$")
+```
+
+## Question 5
+
+$$\large \int_C F \cdot dr$$
+
+$$\large F = (4x^2+5y)\hat{i} + (2x-6y)\hat{j} + (x^3-6z)\hat{k}$$
+
+$$\large C:  (0,0,0) \rightarrow (1,0,0) \rightarrow (1,-3,0) \rightarrow (1,3,2)$$
+
+$$\large r_1(t) = t\hat{i}\ \ \ \ 0 \le t \le 1$$
+
+$$\large r_2(t) = \hat{i} -3t\hat{j}\ \ \ \ 0 \le t \le 1$$
+
+$$\large r_3(t) = \hat{i} + (-3 + 6t)\hat{j} + 2t \hat{k}\ \ \ \ 0 \le t \le 1$$
+
+$$\large \int_{C1} F \cdot dr_1 + \int_{C2} F \cdot dr_2 + \int_{C3} F \cdot dr_3$$
+
+$$\large = \int_0^1 4t^2 dt + \int_0^1 \left( 2(1)-6(-3t) \right)(-3) dt + \int_0^1 \left( 2(1)-6(-3+6t)\right)(6) + \left( 1 - 6(2t) \right)(2) dt$$
+
+$$\large = \int_0^1 4t^2 dt + \int_0^1 (-6 - 54t) dt + \int_0^1 [6(20-36t) + 2(1-12t)] dt$$
+
+$$\large = \frac{4}{3} - 6 - 27 +122 -120 = \frac{4}{3} - \frac{93}{3} = -\frac{89}{3}$$
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+F = (4*x**2+5*y)*N.i + (2*x-6*y)*N.j + (x**3-6*z)*N.k
+
+r1 = t*N.i
+r2 = N.i - 3*t*N.j
+r3 = N.i + (-3 + 6*t)*N.j + 2*t*N.k
+
+part1 = sy.integrate(F.subs(x, t).subs(y, 0).subs(z, 0).dot(sy.diff(r1, t)), (t, 0, 1))
+part2 = sy.integrate(F.subs(x, 1).subs(y, (-3*t)).subs(z, 0).dot(sy.diff(r2, t)), (t, 0, 1))
+part3 = sy.integrate(F.subs(x, 1).subs(y, (-3 + 6*t)).subs(z, (2*t)).dot(sy.diff(r3, t)), (t, 0, 1))
+
+print("$$" + sy.latex(part1 + part2 + part3) + "$$")
+```
+
+## Question 6
+
+$$\large \int_C F \cdot dr$$
+
+$$\large F = (2y-z)\hat{i} + (2z-x)\hat{j} + (3x-y)\hat{k}$$
+
+$$\large C:  (-1,2,1) \rightarrow (3,-2,5)$$
+
+$$\large r(t) = (-1+4t)\hat{i} + (2-4t)\hat{j} + (1+4t)\hat{k} \ \ \ \ 0 \le t \le 1$$
+
+$$\large \int_{C} F \cdot dr = \int_0^1 [2(2-4t)-(1+4t)](4) + [2(1+4t)-(-1+4t)](-4) + [3(-1+4t)-(2-4t)](4) dt$$
+
+$$\large = \int_0^1 [12 - 48t] + [-12 -16t] + [-20 +64t] dt$$
+
+$$\large = \int_0^1 -20 dt = -20$$
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+F = (2*y-z)*N.i + (2*z-x)*N.j + (3*x-y)*N.k
+
+r = (-1+4*t)*N.i + (2-4*t)*N.j + (1+4*t)*N.k
+
+print(sy.integrate(F.subs(x, (-1+4*t)).subs(y, (2-4*t)).subs(z, (1+4*t)).dot(sy.diff(r, t)), (t, 0, 1)))
+```
+
+
+## Question 7
+
+$C$ is a smooth curve given by $r(t)$ $a \le t \le b$
+
+$f$ is a function whose gradient vector $\nabla f$ is continuous on $C$ then
+
+$$\large \int_C \nabla f \cdot dr = f(r(b)) - f(r(a))$$
+
+$$\large F=6x^2\hat{i}+(3y^2-4z)\hat{j}-(4y-8z)\hat{k}$$
+
+$F$ is a conservative vector field
+
+$C$ is a smooth curve from $(1,3,2)$ to $(3,4,5)$
+
+Since $F$ is conservative, then $f$ must exist where $F=\nabla f$
+
+$$\large f = 2x^3 + g(y,z)$$
+
+$$\large f = y^3 - 4yz + h(x,z)$$
+
+$$\large f = -4yz+4z^2 + m(x,y)$$
+
+Therefore
+
+$$\large f = 2x^3 + y^3 -4yz + 4z^2 + C$$
+
+$$\large \int_C F \cdot dr = \int_C \nabla f \cdot dr = 2(3^3)+4^3-4(4)(5)+4(5^2) - \left[ 2(1) + 3^3 - 4(3)(2) + 4(2^2) \right] = 117$$
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+F = 6*N.x**2*N.i + (3*N.y**2-4*N.z)*N.j - (4*N.y-8*N.z)*N.k
+
+f = sv.scalar_potential(F, N)
+print("$$f = " + sy.latex(f) + "$$")
+
+print("Is F conservative? " + str(sv.is_conservative(F)))
+
+print("$$f(r(b)) - f(r(a)) = " + sy.latex(f.subs(N.x, 3).subs(N.y, 4).subs(N.z, 5) - f.subs(N.x, 1).subs(N.y, 3).subs(N.z, 2)) + "$$")
+```
+
+

@@ -1,0 +1,311 @@
+---
+title: "Weekly Assignment 11"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+phi = sy.Symbol('phi', real = True)
+rho = sy.Symbol('rho', real = True)
+```
+
+## Question 1
+
+```{python results="asis", echo=FALSE}
+F = 2*x*y**2*N.i - 5*x**2 * z**3 * N.j + 3*y**2*z*N.k 
+print(sy.latex(sv.divergence(F)))
+```
+
+
+First Quadrant
+
+$$\large z=12 - x - 2y$$ 
+
+$$\large x^2+y^2=4$$
+
+$$\large V=\int_{x=0}^{2} \int_{y=0}^{\sqrt{4-x^2}} \int_{z=0}^{12-x-2y} dzdydx$$
+
+In cylindrical coordinates:
+
+$$\large z = 12-rcos\theta-2rsin\theta$$
+
+$$\large r^2=4$$
+
+at the cap
+
+$$\large r=\frac{12-z}{cos\theta + 2sin\theta}$$
+
+$$\large V=\int_{\theta=0}^{\pi/2} \int_{r=0}^{2} \int_{z=0}^{12-2cos\theta-4sin\theta} rdzdrd\theta \\
++ \int_{\theta=0}^{\pi/2} \int_{z=12-2cos\theta-4sin\theta}^{12} \int_{r=0}^{\frac{12-z}{cos\theta+2sin\theta}} rdrdzd\theta$$
+
+
+```{python echo=FALSE, results="asis", eval=FALSE}
+cart_ans = sy.integrate(1, (z, 0, 12 - x - 2*y), (y, 0, sy.sqrt(4 - x**2)), (x, 0, 2))
+cyl_ans = (sy.integrate(r, (z, 0, 12 - 2*sy.cos(theta) - 4*sy.sin(theta)), 
+                          (r, 0, 2), 
+                          (theta, 0, sy.pi/2)) +
+          sy.integrate(r, (r, 0, (12 - z) / (sy.cos(theta) + 2*sy.sin(theta))), 
+                          (z, 12 - 2*sy.cos(theta) - 4*sy.sin(theta), 12), 
+                          (theta, 0, sy.pi/2)))
+scooter_ans = sy.integrate(r, (z, 0, 12-r*sy.cos(theta)-2*r*sy.sin(theta)), (r, 0, 2), (theta, 0, sy.pi/2))
+
+print(cart_ans) # -8+12*pi
+print(cyl_ans) # -8+12*pi
+print(scooter_ans) # -8 + 12*pi
+
+```
+
+```{r echo=FALSE}
+N <- 10000
+X <- data.frame(x=runif(N, 0, 2),
+                y=runif(N, 0, 2),
+                z=runif(N, 0, 12))
+X$inout <- with(X, ifelse(x^2+y^2<=4 & z<=12-x-2*y, 1, 0))
+X <- X[X$inout == 1,]
+
+plot(X$x, X$y, xlab="x", ylab="y")
+plot(X$x, X$z, xlab="x", ylab="z")
+plot(X$y, X$z, xlab="y", ylab="z")
+
+print(paste("Monte Carlo Volume:", nrow(X)/N*2*2*12))
+print(paste("Analytic Volume:", -8+12*pi))
+
+```
+
+## Question 2
+
+$$\large I = \int \int \int_Q xy dV$$
+
+$$\large x^2+y^2=9$$
+
+$$\large z=2x^2+2y^2$$
+
+$$\large \rho cos(\phi) = 2\rho^2cos^2(\theta)sin^2(\phi) + 2\rho^2sin^2(\theta)sin^2(\phi)$$
+
+$$\large \rho cos(\phi) = 2\rho^2sin^2(\phi)$$
+
+$$\large \rho^2cos^2(\theta)sin^2(\phi) + \rho^2sin^2(\theta)sin^2(\phi) = 9$$
+
+$$\large \rho^2sin^2(\phi) = 9$$
+
+$$\large \rho sin(\phi) = 3$$
+
+At the intersection
+
+$$\large cos(\phi) = 2\frac{3}{sin(\phi)}sin^2(\phi)$$
+
+$$\large \phi = arctan(\frac{1}{6})$$
+
+$$\large I = \int_{\theta=0}^{2\pi} \int_{\phi=arctan(1/6)}^{\pi/2} \int_{\rho=\frac{cos\phi}{2sin^2\phi}}^{\frac{3}{sin\phi}} (\rho cos(\theta)sin(\phi))(\rho sin(\theta) sin(\phi)) \rho^2 sin(\phi) dr d\phi d\theta$$
+
+$$\large = \int_{\theta=0}^{2\pi} \int_{\phi=arctan(1/6)}^{\pi/2} \int_{\rho=\frac{cos\phi}{2sin^2\phi}}^{\frac{3}{sin\phi}} \rho^4 cos(\theta) sin(\theta) sin^3(\phi)) d\rho d\phi d\theta$$
+
+```{python echo=FALSE, results="asis", eval=FALSE}
+sphere_ans = sy.integrate(rho**4*sy.cos(theta)*sy.sin(theta)*(sy.sin(phi))**3, 
+                          (rho, sy.cos(phi) / 2 / (sy.sin(phi))**2, 3/sy.sin(phi)), 
+                          (phi, sy.atan(1/6), sy.pi/2), 
+                          (theta, 0, 2*sy.pi))
+
+print(sphere_ans) # 0
+
+sphere_ans = sy.integrate(rho**2*sy.sin(phi), 
+                          (rho, sy.cos(phi) / 2 / (sy.sin(phi))**2, 3/sy.sin(phi)), 
+                          (phi, sy.atan(1/6), sy.pi/2), 
+                          (theta, 0, 2*sy.pi))
+
+print(sphere_ans) # 81*pi
+```
+
+```{r echo=FALSE}
+N <- 50000
+X <- data.frame(x=runif(N, -3, 3),
+                y=runif(N, -3, 3),
+                z=runif(N, 0, 18))
+X$inout <- with(X, ifelse(x^2+y^2 <= 9 & z <= 2*x^2+2*y^2, 1, 0))
+X$f <- with(X, x*y)
+X <- X[X$inout == 1,]
+
+plot(X$x, X$y, xlab="x", ylab="y")
+plot(X$x, X$z, xlab="x", ylab="z")
+plot(X$y, X$z, xlab="y", ylab="z")
+
+print(paste("Monte Carlo Integral:", sum(X$f)/N*6*6*18))
+print(paste("Analytic Integral:", 0))
+
+print(paste("Monte Carlo Volume:", nrow(X)/N*6*6*18))
+print(paste("Analytic Volume:", 81*pi))
+```
+
+
+## Question 3
+
+$$\large I = \int_{-1}^{1} \int_0^{\sqrt{1-x^2}} \int_{-\sqrt{x^2+y^2}}^{\sqrt{x^2+y^2}} 4xy^2 dzdydx$$
+
+$$\large I = \int_{\theta=0}^{\pi} \int_{r=0}^{1} \int_{z=-r^2}^{r^2} 4(rcos\theta)(rsin\theta)^2 rdzdrd\theta$$
+
+$$\large = \int_{\theta=0}^{\pi} \int_{r=0}^{1} \int_{z=-r^2}^{r^2} 4r^4 cos\theta sin^2\theta dzdrd\theta$$
+
+```{python echo=FALSE, results="asis"}
+ans1 = sy.integrate(4*r**4*sy.cos(theta)*(sy.sin(theta))**2, 
+                          (z, -r**2, r**2))
+ans2 = sy.integrate(4*r**4*sy.cos(theta)*(sy.sin(theta))**2, 
+                          (z, -r**2, r**2), 
+                          (r, 0, 1))
+ans3 = sy.integrate(4*r**4*sy.cos(theta)*(sy.sin(theta))**2, 
+                          (z, -r**2, r**2), 
+                          (r, 0, 1), 
+                          (theta, 0, sy.pi))
+
+print("$$\\large = \\int_{\\theta=0}^{\\pi} \int_{r=0}^{1} " + sy.latex(ans1) + " dr d\\theta $$")
+print("$$\\large = \\int_{\\theta=0}^{\\pi} " + sy.latex(ans2) + "d\\theta $$")
+print("$$\\large = " + sy.latex(ans3) + "$$")
+
+V = sy.integrate(r, 
+                 (z, -r**2, r**2), 
+                 (r, 0, 1), 
+                 (theta, 0, sy.pi))
+# pi/2
+```
+
+```{r echo=FALSE}
+N <- 50000
+X <- data.frame(x=runif(N, -1, 1),
+                y=runif(N, 0, 1),
+                z=runif(N, -2, 2))
+X$inout <- with(X, ifelse(y <= sqrt(1-x^2) & z >= -(x^2+y^2) & z <= x^2+y^2, 1, 0))
+X$f <- with(X, 4*x*y^2)
+X <- X[X$inout == 1,]
+
+plot(X$x, X$y, xlab="x", ylab="y")
+plot(X$x, X$z, xlab="x", ylab="z")
+plot(X$y, X$z, xlab="y", ylab="z")
+
+print(paste("Monte Carlo Integral:", sum(X$f)/N*6*6*18))
+print(paste("Analytic Integral:", 0))
+
+print(paste("Monte Carlo Volume:", nrow(X)/N*2*1*4))
+print(paste("Analytic Volume:", pi/2))
+```
+
+## Question 4
+
+$$\large z = \sqrt{36-x^2-y^2}$$
+
+$$\large x^2+y^2=9$$
+
+$$\large z = \sqrt{36-r^2}$$
+
+$$\large r=3$$
+
+Intersection
+
+$$\large z = \sqrt{27}$$
+
+$$\large V = \int_{\theta=0}^{2\pi} \int_{r=0}^{3} \int_{z=0}^{\sqrt{27}} r dzdrd\theta \\
+\large + \int_{\theta=0}^{2\pi} \int_{z=\sqrt{27}}^{6} \int_{r=0}^{\sqrt{36-z^2}} r drdzd\theta $$
+
+```{python echo=FALSE, results="asis"}
+ans3 = (sy.integrate(r, 
+                     (z, 0, sy.sqrt(27)), 
+                     (r, 0, 3), 
+                     (theta, 0, 2*sy.pi)) +
+        sy.integrate(r,
+                     (r, 0, sy.sqrt(36-z**2)),
+                     (z, sy.sqrt(27), 6),
+                     (theta, 0, 2*sy.pi)))
+
+print("$$\\large V = " + sy.latex(ans3) + "$$")
+```
+
+```{r echo=FALSE}
+N <- 10000
+X <- data.frame(x=runif(N, -3, 3),
+                y=runif(N, -3, 3),
+                z=runif(N, 0, 6))
+X$inout <- with(X, ifelse(x^2+y^2<=9 & z <= sqrt(36-x^2-y^2), 1, 0))
+X <- X[X$inout == 1,]
+
+plot(X$x, X$y, xlab="x", ylab="y")
+plot(X$x, X$z, xlab="x", ylab="z")
+plot(X$y, X$z, xlab="y", ylab="z")
+
+print(paste("Monte Carlo Volume:", nrow(X)/N*6*6*6))
+print(paste("Analytic Volume:", 2*pi*(72-81*sqrt(3)/2)+27*sqrt(3)*pi))
+```
+
+## Question 5
+
+$$\large x^2+y^2+z^2 = 16$$
+
+$$\large x^2+y^2+z^2 = 4$$
+
+$$\large 5z = \sqrt{x^2+y^2}$$
+
+Cylindrical
+
+$$\large \rho = 4$$
+
+$$\large \rho = 2$$
+
+$$\large 5\rho cos\phi = \rho sin \phi$$
+
+$$\large \phi = arctan(5)$$
+
+$$\large V = \int_{\theta=0}^{2\pi} \int_{\phi=0}^{arctan(5)} \int_{\rho=2}^{\rho=4} \rho^2 sin\phi d\rho d\phi d\theta$$
+
+```{python echo=FALSE, results="asis"}
+ans1 = sy.integrate(rho**2 * sy.sin(phi), 
+                    (rho, 2, 4))
+ans2 = sy.integrate(rho**2 * sy.sin(phi), 
+                    (rho, 2, 4), 
+                    (phi, 0, sy.atan(5)))
+ans3 = sy.integrate(rho**2 * sy.sin(phi), 
+                    (rho, 2, 4), 
+                    (phi, 0, sy.atan(5)), 
+                    (theta, 0, 2*sy.pi))
+
+print("$$\\large = \\int_{\\theta=0}^{2\\pi} \\int_{\\phi=0}^{arctan(5)} " + sy.latex(ans1) + " d\\phi d\\theta $$")
+print("$$\\large = \\int_{\\theta=0}^{2\\pi} " + sy.latex(ans2) + "d\\theta $$")
+print("$$\\large = " + sy.latex(ans3) + "$$")
+```
+
+```{r echo=FALSE}
+N <- 50000
+X <- data.frame(x=runif(N, -4, 4),
+                y=runif(N, -4, 4),
+                z=runif(N, 0, 4))
+X$inout <- with(X, ifelse(x^2+y^2+z^2 <= 16 & x^2+y^2+z^2 >= 4 & 5*z >= sqrt(x^2+y^2), 1, 0))
+X <- X[X$inout == 1,]
+
+plot(X$x, X$y, xlab="x", ylab="y")
+plot(X$x, X$z, xlab="x", ylab="z")
+plot(X$y, X$z, xlab="y", ylab="z")
+
+print(paste("Monte Carlo Volume:", nrow(X)/N*8*8*4))
+print(paste("Analytic Volume:", 2*pi*(56/3 - 28*sqrt(26)/39)))
+```
+
+
+

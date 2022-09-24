@@ -1,0 +1,188 @@
+---
+title: "Homework 2 and Lab"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Homework 1
+
+### 1
+
+```{python}
+def foo_while(n):
+  count = 10
+  i=7
+  while i <= 2 * n + 2:
+    count += i
+    i += 3
+  return count
+
+def foo_for(n):
+  count = 10
+  for i in range(7, 2*n+2+1, 3):
+    count += i
+  return count
+
+foo_while(3)
+foo_for(3)
+
+foo_while(10)
+foo_for(10)
+```
+
+### 2
+
+```{python}
+def identity(n):
+  list_of_rows = []
+  for i in range(0,n):
+    row = []
+    for j in range(0,n):
+      if i == j:
+        row.append(1)
+      else:
+        row.append(0)
+    list_of_rows.append(row)
+  return list_of_rows
+
+m = identity(3)
+
+for row in m:
+  print(row)
+
+m = identity(10)
+
+for row in m:
+  print(row)
+
+```
+
+### 3
+
+```{python}
+def anti_identity(n):
+  list_of_rows = []
+  for i in range(0,n):
+    row = []
+    for j in range(0,n):
+      if (n-i-1) == j:
+        row.append(1)
+      else:
+        row.append(0)
+    list_of_rows.append(row)
+  return list_of_rows
+
+m = anti_identity(3)
+
+for row in m:
+  print(row)
+
+m = anti_identity(10)
+
+for row in m:
+  print(row)
+  
+```
+
+### 4
+
+```{python}
+def zee(n):
+  list_of_rows = []
+  onesrow = []
+  for j in range(0, n):
+    onesrow.append(1)
+  list_of_rows.append(onesrow)
+  
+  for i in range(1, n-1):
+    row = []
+    for j in range(0,n):
+      if (n-i-1) == j:
+        row.append(1)
+      else:
+        row.append(0)
+    list_of_rows.append(row)
+    
+  list_of_rows.append(onesrow)
+  
+  return list_of_rows
+
+m = zee(4)
+
+for row in m:
+  print(row)
+
+m = zee(10)
+
+for row in m:
+  print(row)
+
+```
+
+```{python}
+def edges(m, n):
+  list_of_rows = []
+  onesrow = []
+  for j in range(0, n):
+    onesrow.append(1)
+  list_of_rows.append(onesrow)
+  
+  for i in range(1, m-1):
+    row = []
+    for j in range(0, n):
+      if j == 0 or j == n-1:
+        row.append(1)
+      else:
+        row.append(0)
+    list_of_rows.append(row)
+    
+  list_of_rows.append(onesrow)
+  
+  return list_of_rows
+
+m = edges(3, 4)
+
+for row in m:
+  print(row)
+
+m = edges(5, 4)
+
+for row in m:
+  print(row)
+  
+```
+
+## Lab 2
+
+### 1
+
+```{python}
+def passing_1(li):
+  count = 0
+  for i in li:
+    if i >= 60:
+      count += 1
+  return count
+
+passing_1([90, 55, 60, 79, 59, 92])
+```
+
+### 2
+
+
+```{python}
+def passing_2(li):
+  output = []
+  for i in li:
+    if i >= 60:
+      output.append(i)
+  return output
+
+passing_2([90, 55, 60, 79, 59, 92])
+```
+

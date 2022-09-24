@@ -1,0 +1,40 @@
+---
+title: "Lab 3"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+import math
+
+def neg_mul_5(li):
+  return_list = []
+  for i in li:
+    if i % 5 == 0 and i < 0:
+      return_list.append(i)
+  return return_list
+
+neg_mul_5([-10, 2, -5, -8, 16, 10, -2, -15])
+```
+
+## 2
+
+```{python}
+def neg_mul_5(li):
+  return_list = []
+  index = 0
+  while index < len(li):
+    if li[index] % 5 == 0 and li[index] < 0:
+      return_list.append(li[index])
+    index += 1
+  return return_list
+
+neg_mul_5([-10, 2, -5, -8, 16, 10, -2, -15])
+```

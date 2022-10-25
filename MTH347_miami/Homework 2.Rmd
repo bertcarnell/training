@@ -1,0 +1,231 @@
+---
+title: "Online Assignment 10/8"
+author: "RC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+```
+
+## 1
+
+$$\frac{d^ny}{dx^n} = y^{(n)}$$
+
+$$\large y^{(4)} -12y^{(3)}+36y'' = 0$$
+
+$$\large r^4-12r^3+36r^2 = 0$$
+
+$$\large r^2(r^2-12r+36) = r^2(r-6)(r-6) = 0$$
+
+Roots: $r=0,0,6,6$
+
+$$\large y(t) = c_1 + c_2t + c_3e^{6t} + c_4te^{6t}$$
+
+check...
+
+```{python, results='asis'}
+x = sy.Symbol('x')
+f = sy.Function('f')
+df = f(x).diff(x)
+ddf = f(x).diff(x).diff(x)
+dddf = f(x).diff(x).diff(x).diff(x)
+ddddf = f(x).diff(x).diff(x).diff(x).diff(x)
+
+g = sy.dsolve(ddddf - 12*dddf + 36*ddf, f(x))
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-1, 1, length = 1000)
+y <- 1 + x + exp(6*x) + x*exp(6*x)
+plot(x, y, type = "l")
+```
+
+## 2
+
+$$y''-6y'+8y=0,\ \ \ y(0)=-1,\ \ \ y'(0)=2$$
+
+$$r^2-6r+8 = (r-2)(r-4) = 0$$
+
+roots:  $r=2, 4$
+
+$$y(t) = c_1e^{2t} + c_2e^{4t}$$
+
+$$y'(t) = 2c_1e^{2t} + 4c_2e^{4t}$$
+
+$$y(0) = c_1 + c_2 = -1$$
+
+
+$$y'(0) = 2c_1 + 4c_2 = 2$$
+
+```{r}
+solve(matrix(c(1,1,2,4), nrow=2, byrow=TRUE), matrix(c(-1,2), nrow=2))
+```
+
+$$c_1=-3\ \ \ c_2=2$$
+
+$$y(t) = -3e^{2t} + 2e^{4t}$$
+
+```{python, results='asis'}
+g = sy.dsolve(ddf - 6.0*df + 8.0*f(x), f(x), ics={f(0):-1, df.subs(x, 0):2})
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-1, 1, length = 1000)
+y <- -3*exp(2*x) + 2*exp(4*x)
+plot(x, y, type = "l")
+```
+
+## 3
+
+$$2y^{(3)} + 5y'' = 0,\ \ \ y(0) = -1,\ \ \ y'(0) = 0,\ \ \ y''(0) = 1$$
+
+$$2r^3 + 5r^2 = r^2 (2r+5) = 0$$
+
+roots: $r=0,0,-5/2$
+
+$$y(t) = c_1 + c_2t + c_3e^{-\frac{5}{2}t}$$
+
+$$y'(t) = c_2 -\frac{5}{2}c_3e^{-\frac{5}{2}t}$$
+
+$$y''(t) = \frac{25}{4} c_3 e^{-\frac{5}{2}t}$$
+
+$$y(0) = c_1 + c_3 = -1$$
+
+$$y'(0) = c_2 -\frac{5}{2} c_3 = 0$$
+
+$$y''(0) = \frac{25}{4} c_3 = 1$$
+
+$c_3 = \frac{4}{25}$, $c_2 = \frac{2}{5}$, $c_1 = -\frac{29}{25}$
+
+$$y(t) = -\frac{29}{25} + \frac{2}{5}t + \frac{4}{25} e^{-\frac{5}{2}t}$$
+
+```{python, results='asis'}
+g = sy.dsolve(2*dddf + 5*ddf, f(x), ics={f(0):-1, df.subs(x, 0):0, ddf.subs(x, 0):1})
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-2, 2, length = 1000)
+y <- -29/25 + 2/5*x + 4/25*exp(-5/2*x)
+plot(x, y, type = "l")
+```
+
+
+## 4 
+
+$$y^{(3)} + 3y'' + 16y' -102y = 0,\ \ \ y=e^{3x}$$
+
+Since the solution is $y=3x$, we know one root is $3$
+
+$$r^3+3r^2+16r-102=(r-3)(r^2+6r+34)=(r-3)(r+3 \pm 5i)=0$$
+
+roots: $r=3,-3\pm5i$
+
+$$y(t) = c_1e^{3t} + c_2e^{-3t}cos(5t) + c_3e^{-3t}sin(5t)$$
+
+```{python, results='asis'}
+g = sy.dsolve(dddf + 3*ddf + 16*df - 102*f(x), f(x))
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-1, 1, length = 1000)
+y <- exp(3*x) + exp(-3*x)*cos(5*x) + exp(-3*x)*sin(5*x)
+plot(x, y, type = "l")
+```
+
+## 5
+
+$$8y^{(4)} + 6y{(3)} + 33y'' + 24y' + 4y = 0, y = cos(2x)$$
+
+Since $y=cos(2x)$ is a solution, then we expect to have the roots $0\pm2i$
+
+$$8r^4+4r^3+33r^2+24r+4=(r^2+4)(8r^2+6r+1) = (r^2+4)(2r+1)(4r+1) = 0$$
+
+roots: $r=0\pm2i, -1/2, -1/4$
+
+$$y(t)=c_1e^{-\frac{1}{2}t} + c_2e^{-\frac{1}{4}t} + c_3cos(2t) + c_4sin(2t)$$
+
+```{python, results='asis'}
+g = sy.dsolve(8*ddddf + 6*dddf + 33*ddf +24*df + 4*f(x), f(x))
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-2*pi, 2*pi, length = 1000)
+y <- exp(-1/2*x) + exp(-1/4*x) + cos(2*x) + sin(2*x)
+plot(x, y, type = "l")
+```
+
+
+## 6
+
+$$y''-y'-2y=17x+9$$
+
+$$r^2-r-2=(r-2)(r+1)=0$$
+
+complementary
+
+$$y_c(x) = c_1 e^{2x} + c_3 e^{-x}$$
+
+particular
+
+$$y_p(x) = Ax + B$$
+
+$$y_p'(x) = A$$
+
+$$y_p''(x) = 0$$
+
+plugging back in
+
+$$0 - A - 2Ax - 2B = 17x + 9$$
+
+$$-2A = 17$$
+
+$$-A - 2B = 9$$
+
+$A = \frac{-17}{2}$, $B=-\frac{1}{4}$
+
+$$y_p(x) = -\frac{17}{2}x - \frac{1}{4}$$
+
+$$y(x) = y_c(x) + y_p(x) = c_1 e^{2x} + c_3 e^{-x} -\frac{17}{2}x - \frac{1}{4}$$
+
+```{python, results='asis'}
+g = sy.dsolve(ddf - df -2*f(x) - 17*x - 9, f(x))
+
+print(f"$$ {sy.latex(g)} $$")
+```
+
+Visualize
+
+```{r}
+x <- seq(-1, 2, length = 1000)
+y <- exp(2*x) + exp(-x) - 17/2*x - 1/4
+plot(x, y, type = "l")
+```
+
+

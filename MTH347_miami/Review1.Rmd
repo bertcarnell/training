@@ -1,0 +1,248 @@
+---
+title: "Online Assignment 9/9"
+author: "RC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+```
+
+## 1
+
+$$(y-x)y'=y-x+8$$
+
+$$y = x+4\sqrt{x+2}$$
+
+$$([x+4\sqrt{x+2}] - x)*(1+2(x+2)^{-1/2}) = [x+4\sqrt{x+2}] - x + 8$$
+
+$$4\sqrt{x+2}+8 = 4*\sqrt{x+2} + 8$$
+
+$$x>-2$$
+
+## 2
+
+$$\frac{dx}{dt} = (x-1)(1-2x)$$
+
+$$ln\left( \frac{2x-1}{x-1}\right) = t$$
+
+$$\int \frac{dx}{(x-1)(1-2x)} = \int dt$$
+
+
+$$A*(1-2x) + B(x-1) = 1$$
+
+$$B - 2A = 0$$
+
+$$A - B = 1$$
+
+$$A = -1, B = -2$$
+
+$$\int \frac{-1}{(x-1)} + \frac{-2}{(1-2x)} dx = \int dt$$
+
+$$\int \frac{-1}{(x-1)} + \frac{2}{(2x-1)} dx = \int dt$$
+
+$$-ln(x-1) + ln(2x-1) = t$$
+
+$$ln\left( \frac{2x-1}{x-1}\right) = t$$
+
+
+## 3
+
+### 1
+
+$$y' + p(t) y(y) = g(t)$$
+
+$$u(t) y(t) + c = \int u(t) g(t) dt$$
+
+$$u(t) = e^{\int p(t) dt}$$
+
+$$x y' = 4y$$
+
+$$y' - \frac{4}{x} y = 0$$
+
+$$u(t) = e^{\int -4/x dx} = e^{-4ln(x)} = x^{-4}$$
+
+$$x^{-4} y = \int x^{-4} (0) dx + c = 0$$
+
+$$y = cx^4$$
+
+```{python}
+x = sy.Symbol('x')
+f = sy.Function('f')
+g = sy.dsolve(f(x).diff(x) - 4/x*f(x), f(x))
+print(g)
+```
+
+### 2
+
+$$M(x,y) + N(x,y) y' = 0$$
+
+check
+
+$$M_y = N_x$$
+
+$$\Psi = \int M dx = \int N dy$$
+
+Bernoulli
+
+$$y' + p(x) y = q(x) y^n$$
+
+$$\nu = y^{1-n}$$
+
+$$\frac{1}{1-n} v' + p(x) \nu = q(x)$$
+
+
+$$y' + 2xy^2 = 0$$
+
+$$\frac{1}{1-2} \nu' + 0 \nu = -2x$$
+
+$$\nu' = 2x$$
+
+$$\nu = x^2 + c = y^{1-2}$$
+
+$$y = \frac{1}{x^2 + c}$$
+
+```{python}
+g = sy.dsolve(f(x).diff(x) +2*x*f(x)**2, f(x))
+print(g)
+```
+
+### 3
+
+$$y' = e^{2x+3y}$$
+
+$$\int e^{-3y} dy = \int e^{2x} dx$$
+
+$$\frac{-1}{3} e^{-3y} = \frac{1}{2} e^{2x} + c$$
+
+$$y = \frac{-1}{3} ln\left(\frac{-3}{2} e^{2x} + c\right)$$
+
+```{python}
+g = sy.dsolve(f(x).diff(x) - sy.exp(2*x + 3*f(x)), f(x))
+print(g)
+```
+
+log(-1/(C1 + 3*exp(2*x)))/3 + log(2)/3
+
+ln(-1)/3 - ln(c1 + 3e^2x) / 3 + ln(2)/3
+
+
+
+
+
+
+
+
+Find $F(x,y) = c$ given $x,y > 0$
+
+$$y' = \frac{y}{x} + \frac{7}{4} \frac{\sqrt{9x^2+y^2}}{y}$$
+
+Note that we can form a triangle with $\theta$, adjacent side $3x$, 
+opposite side $y$, and hypotenuse $\sqrt{9x^2+y^2}$
+
+$$tan(\theta) = \frac{y}{3x}$$
+
+$$csc(\theta) = \frac{\sqrt{9x^2+y^2}}{y}$$
+
+$$y = 3xtan(\theta)$$
+
+$$y' = 3xsec^2(\theta) \theta ' + 3tan(\theta)$$
+
+Plugging back into our equation:
+
+$$(3xsec^2(\theta))\theta ' + 3tan(\theta) = 3tan(\theta) + \frac{7}{4} csc(\theta)$$
+
+$$\theta' = \frac{\frac{7}{4} csc(\theta)}{3xsec^2(\theta)} = \frac{7}{12x} cos(\theta) cot(\theta)$$
+
+$$\int sec(\theta) tan(\theta) d\theta = \int \frac{7}{12x} dx$$
+
+$$sec(\theta) = \frac{7}{12} ln|x| + c$$
+
+$$\frac{\sqrt{9x^2+y^2}}{3x} = \frac{7}{12} ln|x| + c$$
+
+$$\frac{\sqrt{9x^2+y^2}}{3x} - \frac{7}{12} ln|x| = c$$
+
+Simplifying while allowing the constant to change so we can match python
+
+$$\frac{-4\sqrt{9x^2+y^2}}{7x} + ln|x| = c$$
+
+$$\frac{-4\sqrt{9+y^2 / x^2}}{7} + ln|x| = c$$
+
+Check...
+
+```{python}
+x = sy.Symbol('x')
+f = sy.Function('f')
+g = sy.dsolve(-4*f(x)**2 - 7*x*sy.sqrt(9*x**2 + f(x)**2) + 4*x*f(x)*f(x).diff(x), f(x))
+sy.solve(g[1], sy.Symbol('C1'))
+```
+
+## 2
+
+$$3xy^2y' = 15x^4+y^3$$
+
+$$y' = 5 \frac{x^3}{y^2} + \frac{y}{3x}$$
+
+Substitute $p = \frac{x}{y}$, $y=\frac{x}{p}$, $y'=p^{-1}-xp^{-2}p'$
+
+$$\frac{1}{p}-\frac{x}{p^2}p' = 5xp^2+\frac{1}{3p}$$
+
+$$-\frac{x}{p^2}p' = 5xp^2-\frac{2}{3p}$$
+
+$$p' = -5p^4-\frac{2}{3x}p$$
+
+$$p'-\frac{2}{3x}p = -5p^4$$
+
+This is a Bernoulli form
+
+$$y' + p(x)y=q(x)y^n$$
+
+$$y^{-n}y' + p(x)y^{1-n}=q(x)$$
+
+$$z = y^{1-n}$$
+
+$$z' = (1-n)y^{-n}y'$$
+
+$$\frac{1}{1-n}z'+p(x)z=q(x)$$
+$$z'+(1-n)p(x)z=(1-n)q(x)$$
+
+Plugging back into our equation... and creating a new variable $v$
+
+$$v = p^{1-4}=p^3$$
+$$v'+(-3)(\frac{-2}{3x})v = (-3)(-5)$$
+
+$$v' + \frac{2}{x} v = 15$$
+
+Solving as an ordinary differential equation
+
+$$e^{\int 2/x dx} = e^{2ln|x|} = x^2$$
+
+$$\int (x^2 v)' = \int x^2 (15) dx$$
+
+$$x^2 v = 5x^3 + c$$
+
+$$v = 5x + \frac{c}{x^2}$$
+
+$$p^{-3} = 5x + \frac{c}{x^2}$$
+
+$$\frac{y^3}{x^3} = 5x + \frac{c}{x^2}$$
+
+$$y^3 = 5x^4 + cx$$
+
+$$y = (5x^4 + cx)^{1/3}$$
+
+Check...
+
+```{python}
+g = sy.dsolve(-15*x**4 - f(x)**3 + 3*x*f(x)**2*f(x).diff(x), f(x))
+g[0].rhs
+```
+
+
+

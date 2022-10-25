@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Homework 1
+## Homework 2
 
 ### 1
 

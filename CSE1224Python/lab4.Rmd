@@ -1,0 +1,48 @@
+---
+title: "Lab 4"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+def student_with_lowest_grade(d):
+  lowest = 10000
+  name = ""
+  for k, v in d.items():
+    if v < lowest:
+      lowest = v
+      name = k
+  return name
+
+
+d = {"Mike Jones" : 100,
+"Li Jing" : 86,
+"Mary Smith" : 92,
+"Shanice Jones" : 98,
+"Treyvon Grant" : 93
+}
+
+student_with_lowest_grade(d)
+
+```
+
+## 2
+
+```{python}
+def number_of_As(d):
+  count_of_A = 0
+  for v in d.values():
+    if v >= 93:
+      count_of_A += 1
+  return count_of_A
+
+number_of_As(d)
+
+```

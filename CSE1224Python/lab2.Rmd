@@ -1,0 +1,41 @@
+---
+title: "Lab 2"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Lab 2
+
+### 1
+
+```{python}
+def passing_1(li):
+  count = 0
+  for i in li:
+    if i >= 60:
+      count += 1
+  return count
+
+passing_1([90, 55, 60, 79, 59, 92])
+```
+
+### 2
+
+
+```{python}
+def passing_2(li):
+  output = []
+  for i in li:
+    if i >= 60:
+      output.append(i)
+  return output
+
+passing_2([90, 55, 60, 79, 59, 92])
+```
+

@@ -1,0 +1,38 @@
+---
+title: "Lab 5"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+Each node has a key which is the node label and a value which is a list of 
+the connected nodes
+
+```{python}
+C5 = {
+  0: [4, 1],
+  1: [0, 2],
+  2: [1, 3],
+  3: [2, 4],
+  4: [3, 0]
+}
+```
+
+## 2
+
+Each entry [i,j] is a 1 when node i connects to node j and 0 otherwise
+
+```{python}
+C5 = [[0,1,0,0,1],
+      [1,0,1,0,0],
+      [0,1,0,1,0],
+      [0,0,1,0,1],
+      [1,0,0,1,0]]
+```
+

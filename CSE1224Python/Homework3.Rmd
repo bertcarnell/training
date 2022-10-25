@@ -1,0 +1,80 @@
+---
+title: "homework 3"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+
+def grades(di):
+  cnt = 0
+  for g in di.values():
+    if g >= 60:
+      cnt += 1
+  return cnt
+
+gdi = {"Mike": 60,
+"Li": 92,
+"Joan": 88,
+"Trevor": 58,
+"Betsy": 73}
+
+grades(gdi)
+```
+
+## 2
+
+```{python}
+def grades_2(di):
+  li = []
+  for key, value in di.items():
+    if value >= 60:
+      li.append(key)
+  return li
+
+gdi = {"Mike": 78,
+"Li": 92,
+"Joan": 88,
+"Trevor": 58,
+"Betsy": 73}
+
+grades_2(gdi)
+
+```
+
+## 3
+
+```{python}
+# can't remove items in place when looping
+def grades_3(di):
+  values_in_di = list(di.values())
+  keys_in_di = list(di.keys())
+  for i in range(1, len(values_in_di)):
+    if values_in_di[i] < 60:
+      di.pop(keys_in_di[i])
+  return di
+
+grades_3(gdi)
+```
+
+## 4
+
+```{python}
+# can't remove items in place when looping
+def reverse(di):
+  newdi = {}
+  for key, value in di.items():
+    newdi[value] = key
+  return newdi
+
+gdi = {3: 5, 22: 10, 4: 42, 20: 6}
+
+reverse(gdi)
+```

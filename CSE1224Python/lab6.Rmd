@@ -1,0 +1,57 @@
+---
+title: "Lab 6"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+def min_degree_d(di):
+  min_degree = 1E300
+  for node in di.values():
+    if len(node) < min_degree:
+      min_degree = len(node)
+  return(min_degree)
+
+d = {
+  0: [1, 2, 4],
+  1: [0, 2, 3, 4, 5],
+  2: [0, 1],
+  3: [1, 4],
+  4: [0, 1, 3],
+  5: [1]
+}
+
+min_degree_d(d)
+```
+
+## 2
+
+```{python}
+def min_degree_m(mat):
+  min_degree = 1E300
+  for row in mat:
+    row_degree = 0;
+    for element in row:
+      row_degree += element
+    if row_degree < min_degree:
+      min_degree = row_degree
+  return(min_degree)
+
+d = [[0,1,1,0,1,0],
+     [1,0,1,1,1,1],
+     [1,1,0,0,0,0],
+     [0,1,0,0,1,0],
+     [1,1,0,1,0,0],
+     [0,1,0,0,0,0]]
+     
+min_degree_m(d)
+
+```
+

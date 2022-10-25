@@ -1,0 +1,262 @@
+---
+title: 'Quiz #3'
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{r}
+a <- c(4, 3, 7)
+b <- c(8, 9, 10)
+d <- c(-1, 2, 4)
+
+X <- matrix(c(a, b, d), nrow = 3, ncol = 3)
+X[1,] <- X[1,] - X[2,]
+X[2,] <- X[2,] - 3*X[1,]
+X[3,] <- X[3,] - 7*X[1,]
+X[2,] <- X[2,]*17
+X[3,] <- X[3,]*12
+X[3,] <- X[3,] - X[2,]
+X[3,] <- X[3,]/113
+X[2,] <- X[2,] - 187*X[3,]
+X[2,] <- X[2,]/204
+X[1,] <- X[1,] + X[2,] + 3*X[3,]
+X
+
+```
+
+Therefore the vectors are linearly independent.
+
+Check...
+
+```{r}
+X <- matrix(c(a, b, d), nrow = 3, ncol = 3)
+det(X)
+```
+
+Determinant of $X>0$, therefore the vectors are linearly independent.
+
+## 2
+
+```{r}
+a <- c(8, -1, 2)
+b <- c(0, 1, 4)
+d <- c(-4, 4, 13)
+
+X <- matrix(c(a, b, d), nrow = 3, ncol = 3)
+X[1,] <- X[1,] + 7*X[2,]
+X[2,] <- X[2,] + X[1,]
+X[3,] <- X[3,] - 2*X[1,]
+X[3,] <- X[3,]/5
+X[3,] <- X[3,]*4
+X[3,] <- X[3,] + X[2,]
+X[1,] <- X[1,] - 7/8*X[2,]
+X[2,] <- X[2,]/8
+```
+
+Therefore the vectors are linearly dependent.
+
+Check...
+
+```{r}
+X <- matrix(c(a, b, d), nrow = 3, ncol = 3)
+det(X)
+```
+
+The determinant of $X$ equals zero, therefore columns are linearly dependent.
+
+```{r}
+x1 <- c(8, 2, 3)
+x2 <- c(5, 1, 3)
+x3 <- c(6, 1, 0)
+```
+
+$$8a + 5b = 6$$
+
+$$2a + b = 1$$
+
+```{r}
+X <- matrix(c(8, 5, 6, 2, 1, 1), byrow = TRUE, ncol = 3)
+X[1,] <- X[1,] - 7/2*X[2,]
+X[2,] <- X[2,] - 2*X[1,]
+X[2,] <- X[2,] / -2
+X[1,] <- X[1,] - 3/2*X[2,]
+X
+
+-0.5*x1 + 2*x2
+```
+
+Therefore if $h=4.5$, the vectors are linearly dependent
+
+*** Are there more? ***
+
+## 4
+
+`r c(4, 3, 2)` is not linearly dependent on `r c(1,-1,0)`
+
+```{r}
+X <- matrix(c(1, 4, 11, -1, 3, 17, 0, 2, 8), byrow = TRUE, ncol = 3)
+X
+
+X[2,] <- X[2,] + X[1,]
+X[2,] <- X[2,]/7
+X[3,] <- X[3,] - 2*X[2,]
+X[1,] <- X[1,] - 4*X[2,]
+X
+
+-5*c(1, -1, 0) + 4*c(4,3,2)
+```
+
+`-5*(first vector) + 4*(second vector)`
+
+## 5
+
+`r c(-1, 2, -3)` is not linearly dependent on `r c(5,4,3)`
+
+```{r}
+X <- matrix(c(5, -1, 6, 4, 2, -1, 3, -3, 2), byrow = TRUE, ncol = 3)
+X
+
+X[1,] <- X[1,] - X[2,]
+X[2,] <- X[2,] - 4*X[1,]
+X[3,] <- X[3,] - 3*X[1,]
+X[3,] <- X[3,] - 6/14*X[2,]
+X[2,] <- X[2,] / 14
+X[3,] <- X[3,] * 14/2/-46
+X[2,] <- X[2,] *14
+X[2,] <- X[2,] + 29*X[3,]
+X[2,] <- X[2,] / 14
+X[1,] <- X[1,] + 3*X[2,]
+X[1,] <- X[1,] - 7*X[3,]
+zapsmall(X)
+
+det(X)
+```
+
+Therefore the first three are linearly independent.  The fourth must be linearly dependent on the first three.
+
+
+```{r}
+X <- matrix(c(5, -1, 6, 8, 4, 2, -1, 0, 3, -3, 2, 1), byrow = TRUE, ncol = 4)
+X
+
+# same operations
+X[1,] <- X[1,] - X[2,]
+X[2,] <- X[2,] - 4*X[1,]
+X[3,] <- X[3,] - 3*X[1,]
+X[3,] <- X[3,] - 6/14*X[2,]
+X[2,] <- X[2,] / 14
+X[3,] <- X[3,] * 14/2/-46
+X[2,] <- X[2,] *14
+X[2,] <- X[2,] + 29*X[3,]
+X[2,] <- X[2,] / 14
+X[1,] <- X[1,] + 3*X[2,]
+X[1,] <- X[1,] - 7*X[3,]
+zapsmall(X)
+
+zapsmall(0.0326087*c(5,4,3) + 0.6413043*c(-1,2,-3) + 1.4130435*c(6,-1,2))
+
+```
+
+## 6
+
+$$Ax = b$$
+
+```{r}
+A <- matrix(c(2,0,1,-1,1,1,0,3,2,1,0,1,-3,1,2), nrow=3)
+b <- matrix(c(1,2,3), ncol = 1)
+
+D <- cbind(A, b)
+
+D[1,] <- D[1,] - D[3,]
+D[3,] <- D[3,] - D[1,]
+D[3,] <- D[3,] - 3*D[2,]
+D[3,] <- D[3,] / -1
+D[2,] <- D[2,] * 5
+D[3,] <- D[3,] * 3
+D[2,] <- D[2,] - D[3,]
+D[2,] <- D[2,] * 2
+D[1,] <- D[1,] * 5
+D[1,] <- D[1,] + D[2,]
+D[1,] <- D[1,] * 3
+D[3,] <- D[3,] * 2
+D[1,] <- D[1,] + D[3,]
+D[1,] <- D[1,]/3
+D[2,] <- D[2,]/2
+D[3,] <- D[3,]/6
+D
+
+# choose x_4 and x_5 = 0
+A %*% matrix(c(6/5, 7/5, 1/5, 0, 0), ncol = 1)
+```
+
+$$x_4, x_5 \epsilon \textbf{R}^1$$
+
+$$x = (6/5 - 4/5x_4 - 1/5x_5, 7/5 - 3/5x_4 - 17/5x_5, 1/5 + 1/5x_4 + 4/5x_5, x_4, x_5)$$
+
+## 7
+
+$$f(x, y, z) = (x + y, y - z, x + 3y+z, 3x+4y-z)$$
+
+$$f(x, y, z) = A x$$
+
+```{r}
+A <- matrix(c(1, 1, 0, 0, 1, -1, 1, 3, 1, 3, 4, -1), byrow = TRUE, ncol = 3)
+A
+```
+
+check...
+
+```{r}
+f <- function(x, y, z) c(x + y, y - z, x + 3*y+z, 3*x+4*y-z)
+
+f(1,5,7)
+A %*% matrix(c(1,5,7), ncol = 1)
+```
+
+## 8
+
+$$f(x, y, z) = (3x + z, y - 4z, x + y+z, -x+2y+3z)$$
+
+$$f(x, y, z) = A x$$
+
+```{r}
+A <- matrix(c(3, 0, 1, 0, 1, -4, 1, 1, 1, -1, 2, 3), byrow = TRUE, ncol = 3)
+A
+```
+
+check...
+
+```{r}
+f <- function(x, y, z) c(3*x + z, y - 4*z, x + y+z, -x+2*y+3*z)
+
+f(1,5,7)
+A %*% matrix(c(1,5,7), ncol = 1)
+```
+
+## 9
+
+$$f(x, y) = (3x + 2y, 2x+y)$$
+
+$$f(x, y) = A x$$
+
+```{r}
+A <- matrix(c(3, 2, 2, 1), byrow = TRUE, ncol = 2)
+A
+```
+
+check...
+
+```{r}
+f <- function(x, y, z) c(3*x + 2*y, 2*x+y)
+
+f(1,9)
+A %*% matrix(c(1,9), ncol = 1)
+```
+

@@ -1,0 +1,400 @@
+---
+title: "Weekly Assignment 11"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+phi = sy.Symbol('phi', real = True)
+rho = sy.Symbol('rho', real = True)
+```
+
+## Question 1
+
+### Part A
+
+$$\large \int_{x=0}^1 \int_{y=x}^{\sqrt{x}} 2x-y dydx = \int_0^1 2x^{3/2}-\frac{x}{2} -\frac{3}{2}x^2 dx = \frac{1}{20}$$
+
+```{python}
+sy.integrate(2*x-y, (y, x, sy.sqrt(x)), (x, 0, 1))
+```
+
+### Part B
+
+$$\large \int_{y=0}^1 \int_{x=0}^{1-y} x^2+2y dxdy = \int_0^1 \frac{1}{3} (1-y)^3 + 2y(1-y) dy = \frac{5}{12}$$
+
+```{python}
+sy.integrate(x**2+2*y, (x, 0, 1-y), (y, 0, 1))
+```
+
+### Part C
+
+$$\large \int_{x=0}^1 \int_{y=0}^x \int_{z=0}^{x-2y} x^2 dzdydx = \int_0^1 \int_0^x x^2(x-2y) dydx$$
+
+$$\large = \int_0^1 x^4-x^4 dx = 0$$
+
+```{python}
+sy.integrate(x**2, (z, 0, x-2*y), (y, 0, x), (x, 0, 1))
+```
+
+## Question 2
+
+$$\large \int_{x=-2}^2 \int_{y=x^2}^4 x^2y dy dx = \int_{y=0}^{4} \int_{x=-\sqrt{y}}^{\sqrt{y}} x^2y dx dy$$
+
+```{python}
+sy.integrate(x**2*y, (y, x**2, 4), (x, -2, 2))
+sy.integrate(x**2*y, (x, -sy.sqrt(y), sy.sqrt(y)), (y, 0,  4))
+```
+
+## Question 3
+
+### Part A
+
+$$y = x^2+1$$
+
+$$y=2x^2-3$$
+
+Intersect at $x \pm 2$ and $y=5$
+
+$$\large A=\int_{x=-2}^{2} \int_{2x^2-3}^{x^2+1}dy dx = \int_{-2}^2 (x^2+1)-(2x^2-3) dy = \frac{32}{3}$$
+
+```{python}
+sy.integrate(1, (y, 2*x**2-3, x**2+1), (x, -2, 2))
+```
+
+### Part B
+
+Inner
+
+$$r = 2sin\theta$$
+
+Outer
+
+$$r=1$$
+
+Intersect at $\theta = \frac{\pi}{6}, \frac{5\pi}{6}$
+
+$$\large A=\int_{\theta=\pi/6}^{5\pi/6} \int_{r=1}^{2sin\theta} rdrd\theta = \int_{\theta=\pi/6}^{5\pi/6} 2sin^2\theta - \frac{1}{2} = \frac{\pi}{3} - \frac{\sqrt{3}}{2}$$
+
+```{python}
+sy.integrate(r, (r, 1, 2*sy.sin(theta)), (theta, sy.pi / 6, 5*sy.pi/6))
+```
+
+## Question 4
+
+$$z = x^2 + 2y^2$$
+
+$$z = 12-2x^2-y^2$$
+
+Intersect at $0=4-x^2-y^2$
+
+$$\large \int_{x=-2}^2 \int_{y=-\sqrt{4-x^2}}^{\sqrt{4-x^2}} (12-2x^2-y^2)-(x^2+2y^2) dydx$$
+
+$$\large = \int_{\theta=0}^{2\pi} \int_{r=0}^2 12-3r^2 rdrd\theta = \int_{\theta=0}^{2\pi} 24-12 d\theta = 24\pi$$
+
+```{python}
+# unstable
+# sy.integrate((12-2*x**2-y**2) - (x**2+2*y**2), (y, -1*sy.sqrt(4-x**2), sy.sqrt(4-x**2)), (x, -2, 2))
+# yields the correct 24pi
+# 4*sy.integrate((12-2*x**2-y**2) - (x**2+2*y**2), (y, 0, sy.sqrt(4-x**2)), (x, 0, 2))
+sy.integrate((12-3*r**2)*r, (r, 0, 2), (theta, 0, 2*sy.pi))
+```
+
+## Question 5
+
+$$\large 3x+y+4z=12,\ \ x=0, \ \ y=0,\ \ z=0$$
+
+$$\large V=\int_{x=0}^4 \int_{y=0}^{12-3x} \int_{z=0}^{12-3x-y)/4} dzdydx$$
+
+$$\large = \int_{x=0}^4 \int_{y=0}^{12-3x} (12-3x-y)/4 dydz = \int_0^4 \frac{9}{8}(4-x)^2 dx = 24$$
+
+```{python}
+sy.integrate(1, (z, 0, (12-3*x-y)/4), (y, 0, 12-3*x), (x, 0, 4))
+```
+
+## Question 6
+
+$$\large y=x^3$$
+
+$$\large y=2x$$
+
+$$x \ge 0$$
+
+$$\rho(x,y) = 2y$$
+
+$$\large M = \int_{x=0}^{\sqrt{2}} \int_{y=x^3}^{2x} 2y dydx = \int_{x=0}^{\sqrt{2}} 4x^2 - x^6 dx = \frac{32}{21}\sqrt{2}$$
+
+$$\large M_x = \int_{x=0}^{\sqrt{2}} \int_{y=x^3}^{2x} 2y^2 dydx = \frac{16}{5}$$
+
+$$\large M_y = \int_{x=0}^{\sqrt{2}} \int_{y=x^3}^{2x} 2xy dydx = 2$$
+
+$$\large \bar{x} = \frac{M_y}{M} = \frac{21}{32}\sqrt{2}$$
+
+$$\large \bar{y} = \frac{M_x}{M} = \frac{21}{20}\sqrt{2}$$
+
+
+```{python}
+M = sy.integrate(2*y, (y, x**3, 2*x), (x, 0, sy.sqrt(2)))
+sy.integrate(2*y**2, (y, x**3, 2*x), (x, 0, sy.sqrt(2))) / M
+sy.integrate(2*y*x, (y, x**3, 2*x), (x, 0, sy.sqrt(2))) / M
+
+```
+
+## Question 7
+
+$$\large \int_R \int \frac{1}{\sqrt{4-x^2-y^2}} dA = \int_{\theta=0}^{\pi/2} \int_{r=0}^1 \frac{1}{\sqrt{4-r^2}} rdrd\theta$$
+
+$$\large R: x^2 + y^2 = 1$$
+
+
+$$\large = \int_{\theta=0}^{\pi/2} 2-\sqrt{3} d\theta = (2-\sqrt{3})\frac{\pi}{2}$$
+
+```{python}
+sy.integrate(r/sy.sqrt(4-r**2), (r, 0, 1), (theta, 0, sy.pi/2))
+```
+
+## Question 8
+
+$$\large z=x^2+y^2$$
+
+$$\large x^2+y^2+z^2=20$$
+
+$$\large V = \int_{\theta=0}^{\pi/2} \int_{r=0}^2 \int_{z=r^2}^{\sqrt{20-r^2}} rdzdrd\theta$$
+
+$$\large = \int_{\theta=0}^{\pi/2} \int_{r=0}^2 r(\sqrt{20-r^2} - r^2) drd\theta$$
+
+$$\large = \int_{\theta=0}^{\pi/2} \frac{1}{3}(-76 + 20^{3/2}) d\theta = \frac{\pi}{6}(20^{3/2} - 76) = \frac{\pi}{6}(40\sqrt{5} - 76)$$
+
+```{python}
+sy.integrate(r, (z, r**2, sy.sqrt(20-r**2)), (r, 0, 2), (theta, 0, sy.pi/2))
+```
+
+## Question 9
+
+$$\large x^2+y^2+z^2=36$$
+
+$z=0$ to $z=3$
+
+$$\large \int_{\phi=\pi/3}^{\pi/2} \int_{\theta=0}^{2\pi} \int_{\rho=0}^6 \rho^2sin\phi d\rho d\theta d\phi$$
+
+$$\large = \int_{\phi=\pi/3}^{\pi/2} \int_{\theta=0}^{2\pi} 72sin\phi \ \ d\theta d\phi$$
+
+$$\large = \int_{\phi=\pi/3}^{\pi/2} (2\pi)(72)sin\phi \ \ d\phi = 72\pi$$
+
+```{python}
+sy.integrate(r**2*sy.sin(phi), (phi, sy.pi/3, sy.pi/2), (theta, 0, 2*sy.pi), (r, 0, 6))
+```
+
+## Question 10
+
+### Part A
+
+$$\large \int_0^2 \int_0^{\sqrt{4-x^2}} \int_0^{4-x^2-y^2} x^2 dzdydx$$
+
+$$\large = \int_{r=0}^2 \int_{\theta=0}^{\pi} \int_{z=0}^{4-r^2} r^3 cos^2{\theta} dz d \theta dr$$
+
+$$\large = \int_{\theta=0}^{\pi} \int_{r=0}^2 (4-r^2) r^3 cos^2{\theta} \ \ dr d \theta$$
+
+$$\large = \int_{\theta=0}^{\pi} (16-\frac{64}{6})  cos^2{\theta} \ \ d \theta = \frac{32}{6} \frac{\pi}{2} = \frac{8\pi}{3}$$
+
+```{python}
+sy.integrate(r**3*(sy.cos(theta))**2, (z, 0, 4-r**2), (theta, 0, sy.pi), (r, 0, 2))
+```
+
+### Part B
+
+$$\large \int_{-\sqrt{1/2}}^{\sqrt{1/2}} \int_{-\sqrt{1/2-x^2}}^{\sqrt{1/2-x^2}} \int_{\sqrt{x^2+y^2}}^{\sqrt{1-x^2-y^2}} \sqrt{x^2+y^2+z^2} dzdydx$$
+
+$$\large = \int_{\theta=0}^{2\pi} \int_{r=0}^{\sqrt{1/2}} \int_{z=r}^{\sqrt{1-r^2}} r\sqrt{r^2+z^2} dzdr d\theta$$
+
+$$\large = \int_{\theta=0}^{2\pi} \int_{z=0}^{1} \int_{r=z}^{\sqrt{1-z^2}}  r\sqrt{r^2+z^2} dzdr d\theta$$
+
+
+```{python}
+sy.integrate(r*sy.sqrt(r**2+z**2), (r, z, sy.sqrt(1-z**2)), (z, 0, 1), (theta, 0, 2*sy.pi))
+```
+
+## Question 11
+
+$$\large F = x^2yz\hat{i} + 3xyz^3 \hat{j} + (x^2-z^2)\hat{k}$$
+
+### A
+
+```{python results="asis", echo=FALSE}
+F = N.x**2*N.y**2*N.z * N.i + 3*N.x*N.y*N.z**3 * N.j + (N.x**2-N.z**2) * N.k 
+print("$$" + sy.latex(sv.divergence(F)) + "$$")
+```
+
+### B
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sv.curl(F)) + "$$")
+```
+
+## Question 12
+
+$$\large F = (2xy+3x^2z) \hat{i} + (x^2 -4z+6y^2) \hat{j} + (x^3-4y) \hat{k}$$
+
+$F$ is a conservative field if and only if $$\nabla f = F$$
+
+$F$ is defined everywhere in $\mathbb{R}^3$
+
+If $F$ is conservative, then the $curl(F) = 0$
+
+```{python results="asis", echo=FALSE}
+F = (2*N.x*N.y + 3*N.x**2*N.z)*N.i + (N.x**2-4*N.z+6*N.y**2)*N.j + (N.x**3-4*N.y)*N.k
+print("$$" + sy.latex(sv.curl(F)) + "$$")
+```
+
+Find the potential $f$
+
+$$\large \frac{\partial f}{\partial x} = F \cdot \hat{i} = 2xy + 3x^2z$$
+
+$$\large f = x^2y+x^3z+g(y,z)$$
+
+$$\large \frac{\partial f}{\partial y} = F \cdot \hat{j} = x^2 -4z+6y^2$$
+
+$$\large f = x^2y-4yz+2y^3+h(x,z)$$
+
+$$\large \frac{\partial f}{\partial z} = F \cdot \hat{k} = x^3-4y$$
+
+$$\large f = x^3z-4yz+m(x,y)$$
+
+Therefore
+
+$$\large f = x^2y+x^3z-4yz+2y^3 + C$$
+
+Since $f$ can be found, $F$ is conservative
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+print("$$" + sy.latex(sv.scalar_potential(F, N)) + "$$")
+
+print("Is F conservative? " + str(sv.is_conservative(F)))
+```
+
+## Question 13
+
+$$\int_C x^3yds$$
+
+$$C: r(t) = 3cost \hat{i} + 3sint \hat{j}\ \ \ 0 \le t \le \frac{\pi}{2}$$
+
+$$\large \int_C f(r(t)) ds = \int_a^b f(r(t))||r'(t)|| dt$$
+
+$$\large \int_C x^3y\ ds = \int_0^{\pi/2} (3cost)^3(3sint)\sqrt{9sin^2t + 9cos^2t} \ \ dt$$
+
+$$= 3^5\frac{-1}{4}cos^4t \big|_0^{\pi/2} = \frac{3^5}{4}$$
+
+Using python...
+
+```{python results="asis", echo=FALSE}
+C = sy.Curve([3*sy.cos(t), 3*sy.sin(t)], (t, 0, sy.pi/2))
+print("$$" + sy.latex(sy.line_integrate(x**3*y, C, [x, y])) + "$$")
+```
+
+## Question 14
+
+$$\int_C (x+y+z)dx + (x-2y+3z)dy + (2x+y-z) dz$$
+
+$$C:\ (0,0,0) \rightarrow (0,4,0) \rightarrow (2,4,0) \rightarrow (2,4,3)$$
+
+$$\int_C F \cdot dr = \int_C Pdx + Qdy + Rdz = \int_a^b F(r(t)) \cdot r'(t) dt$$
+
+$$F = (x+y+z)\hat{i} + (x-2y+3z)\hat{j} + (2x+y-z)\hat{k}$$
+
+First segment
+
+$$\int_0^4 (0-2y+0) dy = -16$$
+
+$r(t) = t\hat{j}\ \ 0 \le t \le 4$ and $r'(t) = \hat{j}$ and $\int_0^4 -2t dt = -16$
+
+Second segment
+
+$$\int_0^2 (x+4+0)dx = 10$$
+
+$r(t) = t\hat{i} + 4\hat{j} \ \ 0 \le t \le 2$ and $r'(t) = \hat{i}$ and $\int_0^2 (t+4) dt = 10$
+
+Third segment
+
+$$\int_0^3 (2(2)+4-z)dz = 8(3)-\frac{9}{2} = \frac{39}{2}$$
+
+$r(t) = 2\hat{i} + 4\hat{j} + t\hat{k}\ \ 0 \le t \le 3$ and $r'(t) = \hat{k}$ and $\int_0^3 (8-t)dt = 24-(9/2) = 39/2$
+
+Total:  $-16 + 10 + \frac{39}{2} = \frac{27}{2}$
+
+## Question 15
+
+$$\int_C (x^2-y^2)dx + (2xy)dy$$
+
+$$C:\ r(t)=2t\hat{i} + t^2 \hat{j}\ \ 0 \le t \le 2$$
+
+$$\int_C F \cdot dr = \int_C Pdx + Qdy + Rdz = \int_a^b F(r(t)) \cdot r'(t) dt$$
+
+$$F = (x^2-y^2)\hat{i} + (2xy)\hat{j}$$
+
+$$r'(t) = 2\hat{i} + 2t\hat{j}$$
+
+$$\int_0^2 (4t^2-t^4)(2) + (2)(2t)(t^2)(2t) dt = \int_0^2 8t^2+6t^4 dt = (8)(8)/3+6/5(32) = 896/15$$
+
+```{python results="asis", echo=FALSE}
+F = (x**2-y**2)*N.i + (2*x*y)*N.j
+
+r = (2*t)*N.i + (t**2)*N.j
+
+print(sy.integrate(F.subs(x, (2*t)).subs(y, (t**2)).dot(sy.diff(r, t)), (t, 0, 2)))
+```
+
+## Question 16
+
+$$\int_C F(x,y) \cdot dr$$
+
+$$F = (y^2+2xy)\hat{i} + (x^2+2xy) \hat{j}$$
+
+$$C:  (-1,2) \rightarrow (3,1)$$
+
+$C$ is a smooth curve given by $r(t)$ $a \le t \le b$
+
+$f$ is a function whose gradient vector $\nabla f$ is continuous on $C$ then
+
+$$\large \int_C \nabla f \cdot dr = f(r(b)) - f(r(a))$$
+
+$$f = xy^2 + x^2y$$
+
+$$\int_C F(x,y) \cdot dr = \int_C \nabla f \cdot dr = 3(1)+9(1) - [(-4) + 2]=14$$
+## Question 17
+
+$$\oint_C y^2 dx + xy dy$$
+
+$y=0$, $y=\sqrt{x}$, $x=4$
+
+Greens Theorem:
+
+$$\oint_C F \cdot dr = \oint_C Pdx + Qdy = \int \int_D (Q_x - P_y)dA$$
+
+$$=\int_0^4 \int_0^{\sqrt{x}} (y - 2y) dy dx = \int_0^4 \int_0^{\sqrt{x}} -y dy dx$$
+
+$$=\int_0^4 \frac{-x}{2} dx = -4$$
+

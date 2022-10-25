@@ -1,0 +1,53 @@
+---
+title: "Weekly Assignment 13"
+author: "RC"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(scatterplot3d)
+require(reticulate)
+require(ggplot2)
+```
+
+```{python}
+import sympy as sy
+import sympy.vector as sv
+
+N = sv.CoordSys3D('N')
+t = sy.Symbol('t', real = True)
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+r = sy.Symbol('r', real = True)
+s = sy.Symbol('s', real = True)
+theta = sy.Symbol('theta', real = True)
+phi = sy.Symbol('phi', real = True)
+rho = sy.Symbol('rho', real = True)
+```
+
+## Question 1
+
+## Question 2
+
+## Question 3
+
+```{python}
+curve1 = sv.ParametricRegion((2-t, t, 0), (t, 0, 2))
+curve2 = sv.ParametricRegion((0, 2-t, t), (t, 0, 2))
+curve3 = sv.ParametricRegion((t, 0, 2-t), (t, 0, 2))
+F = 2*N.y*N.i + 3*N.z*N.j + N.x*N.k
+
+sv.vector_integrate(F, curve1) + sv.vector_integrate(F, curve2) + sv.vector_integrate(F, curve3)
+
+surface = sv.ParametricRegion((x,y,2-x-y), (y, 0, 2-x), (x, 2, 0))
+
+sv.vector_integrate(sv.curl(F), surface)
+
+sv.curl(F)
+```

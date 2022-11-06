@@ -1,0 +1,60 @@
+---
+title: "Lab 8"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{python}
+def print_mat(m):
+  for i in range(len(m)):
+    print(m[i])
+```
+
+## 1
+
+```{python}
+def is_regular_d(di):
+  values = list(di.values())
+  first_degree = len(values[0])
+  for i in range(len(values)):
+    if len(values[i]) != first_degree:
+      return False
+  return True
+
+is_regular_d({0: [1,2], 1: [2,3], 2: [0,3], 3: [0,1]})
+
+is_regular_d({0: [1,2], 1: [2,3], 2: [0], 3: [0,1]})
+  
+```
+
+## 2
+
+```{python}
+def is_regular_m(mat):
+  first_degree = 0
+  for i in range(len(mat)):
+    degree = 0
+    for j in range(len(mat[i])):
+      degree += mat[i][j]
+    if i == 0:
+      first_degree = degree
+    if degree != first_degree:  
+      return False
+  return True
+
+is_regular_m([[0,1,1,0],
+              [0,0,1,1],
+              [1,0,0,1],
+              [1,1,0,0]])
+
+is_regular_m([[0,1,1,0],
+              [0,0,1,1],
+              [1,0,0,1],
+              [0,0,0,0]])
+              
+```

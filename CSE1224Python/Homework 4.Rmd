@@ -1,0 +1,105 @@
+---
+title: "Homework 4"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+def print_mat(m):
+  for i in range(len(m)):
+    print(m[i])
+
+def anti_diag(n):
+  m = []
+  for i in range(n):
+    m.append([])
+    for j in range(n):
+      if j == n - i - 1:
+        m[i].append(1)
+      else:
+        m[i].append(0)
+  return m
+
+print_mat(anti_diag(1))
+print_mat(anti_diag(2))
+print_mat(anti_diag(5))
+print_mat(anti_diag(10))
+```
+
+## 2
+
+```{python}
+# n must be odd
+def small_plus(n):
+  m = []
+  half = (n - 1) / 2
+  for i in range(n):
+    m.append([])
+    for j in range(n):
+      if i == half:
+        if j >= half - 1 and j <= half + 1:
+          m[i].append(1)
+        else:
+          m[i].append(0)
+      elif i == half - 1 or i == half + 1:
+        if j == half:
+          m[i].append(1)
+        else:
+          m[i].append(0)
+      else:
+        m[i].append(0)
+  return m
+
+print_mat(small_plus(3))
+print_mat(small_plus(5))
+print_mat(small_plus(7))
+```
+
+## 3
+
+```{python}
+def border(m, n):
+  mat = []
+  for i in range(m):
+    mat.append([])
+    for j in range(n):
+      if j == 0 or j == n - 1:
+        mat[i].append(1)
+      elif i == 0 or i == m - 1:
+        mat[i].append(1)
+      else:
+        mat[i].append(0)
+  return mat
+
+print_mat(border(5,4))
+print_mat(border(5,5))
+print_mat(border(3,7))
+print_mat(border(7,3))
+```
+
+## 4
+
+```{python}
+def stripes(n):
+  mat = []
+  for i in range(n):
+    mat.append([])
+    for j in range(n):
+      if i % 2 == 0:
+        mat[i].append(1)
+      else:
+        mat[i].append(0)
+  return mat
+
+print_mat(stripes(3))
+print_mat(stripes(4))
+print_mat(stripes(5))
+print_mat(stripes(6))
+```

@@ -1,0 +1,97 @@
+---
+title: "Homework 5"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{python}
+def star_d(n):
+  m = {}
+  m.update({0: []})
+  for i in range(1, n):
+    m.get(0).append(i)
+    m.update({i: [0]})
+  return m
+
+star_d(5)
+star_d(3)
+```
+
+## 2
+
+```{python}
+def print_mat(m):
+  for i in range(len(m)):
+    print(m[i])
+
+def star_m(n):
+  m = []
+  m.append([0])
+  for i in range(1,n):
+    m[0].append(1)
+    m.append([1])
+    for j in range(1,n):
+      m[i].append(0)
+  return(m)
+
+print_mat(star_m(5))
+
+```
+
+## 3
+
+```{python}
+def transpose_m(mat):
+  new_mat = []
+  for i in range(len(mat)):
+    new_mat.append([])
+    for j in range(len(mat[i])):
+      new_mat[i].append(mat[j][i])
+  return new_mat
+
+print_mat(transpose_m([[0,1,0,0,1],
+                       [0,0,0,0,0],
+                       [1,1,0,1,0],
+                       [0,0,0,0,1],
+                       [1,0,0,0,0]]))
+
+print_mat(
+  transpose_m(
+    transpose_m([[0,1,0,0,1],
+                       [0,0,0,0,0],
+                       [1,1,0,1,0],
+                       [0,0,0,0,1],
+                       [1,0,0,0,0]])))
+                       
+```
+
+## 4
+
+```{python}
+def transpose_d(di):
+  nodes = di.keys()
+  values = di.values()
+  new_di = {}
+  for i in nodes:
+    # find this node in the values section
+    new_array = []
+    for j in nodes:
+      for k in range(len(di.get(j))):
+        if di.get(j)[k] == i:
+          new_array.append(j)
+    new_di.update({i: new_array})
+  return new_di
+
+transpose_d({0: [1,2], 1: [], 2: [0, 3, 4], 3: [2], 4: [0, 3]})
+
+transpose_d(transpose_d({0: [1,2], 1: [], 2: [0, 3, 4], 3: [2], 4: [0, 3]}))
+          
+```
+

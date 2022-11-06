@@ -1,0 +1,8 @@
+Video	lo_00_1	Loco Parentis	2000	0.99	PG	false
+Video	lo_01_1	Hubris	2001	0.99	PG13	false
+Video	lo_02_1	The Collar	2002	0.99	PG	false
+Video 	lo_03_1	Mother's Day	2003	0.99	PG	false
+Video	lo_04_1	Darwinian	2004	0.99	PG	false
+Audio	bs_03_1	Toxic	2003	0.99	10	false
+Audio	ri_07_1	Umbrella	2007	1.25	25	false
+Auido	sd_04_1	Drop It Like It's Hot	2004	0.75	-1	false

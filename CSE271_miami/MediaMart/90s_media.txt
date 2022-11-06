@@ -1,0 +1,9 @@
+Audio	m_90_1	Hold On	1990	1.99	1	false
+Audio	m_90_2	Thunderstruck	1990	1.75	39	false
+Audio	m_90_3	My Secret Passion	1990	1.85	-1	true
+Video	lo_90_1	Prescription for Death	1990	0.99	PG	false
+Video	lo_91_1	Confession	1991	0.99	PG	false
+Video	lo_92_1	Skin Deep	1992	0.99	PG	false
+Video	lo_94_1	Second Opinion	1994	0.99	PG13	true
+Video	lo_93_1	Sweeps	1993	0.99	G	false
+Video	lo_95_1	Bitter Fruit	1995	0.99	PG	true

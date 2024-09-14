@@ -1,0 +1,35 @@
+999
+The Last Item
+book
+Some author
+Some publisher
+006
+Avatar
+video
+James Cameron
+Blu-ray
+004
+Tom Sawyer
+book
+Mark Twain
+publisher2
+003
+Gone with the Wind
+book
+Margaret Mitchell
+publisher1
+005
+Elvis
+video
+Baz Luhrmann
+digital
+007
+The Very Hungry Caterpillar
+book
+Eric Carle
+Philomel
+444
+title
+book
+author
+publisher

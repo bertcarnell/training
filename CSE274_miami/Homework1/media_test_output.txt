@@ -1,0 +1,35 @@
+1
+Java for Beginners
+book
+Dr. KnowsEverything
+Pearson
+2
+Star Wars
+video
+George Lucas
+DVD
+3
+Gone with the Wind
+book
+Margaret Mitchell
+publisher1
+4
+Tom Sawyer
+book
+Mark Twain
+publisher2
+5
+Elvis
+video
+Baz Luhrmann
+digital
+6
+Avatar
+video
+James Cameron
+Blu-ray
+7
+The Very Hungry Caterpillar
+book
+Eric Carle
+Philomel

@@ -1,0 +1,180 @@
+---
+title: "Zane State English Grades Analysis"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require(readxl)
+require(dplyr)
+require(ggplot2)
+
+X <- readxl::read_xlsx(file.path("Themed Data.xlsx"))
+themed <- readxl::read_xlsx(file.path("Themed Data.xlsx"), sheet = 2)
+not_themed <- readxl::read_xlsx(file.path("Themed Data.xlsx"), sheet = 3)
+
+themed <- themed %>%
+  dplyr::mutate(themed = "Y")
+not_themed <- not_themed %>%
+  dplyr::mutate(themed = "N")
+Y <- rbind(themed, not_themed)
+names(Y) <- c("id", "course_number", "section", "final_grade", "themed")
+names(X) <- c("id", "course_number", "section", "final_grade", "cum_gpa")
+
+Y <- Y %>% 
+  dplyr::left_join(X, by = c("id", "course_number", "section", "final_grade"))
+
+Y$cum_gpa_bin <- cut(Y$cum_gpa, c(-0.1, 0, 1, 2, 3, 4), labels = c("0", "0-1", "1-2", "2-3", "3-4"))
+
+stopifnot(all(Y$id %in% X$id) & all(X$id %in% Y$id))
+stopifnot(all(!is.na(Y$cum_gpa)))
+```
+
+## Data
+
+```{r}
+table(Section = Y$section, Themed = Y$themed)
+```
+
+## Figures
+
+### Overall
+
+```{r}
+ggplot(Y, aes(x=final_grade)) +
+  geom_bar() +
+  labs(x = "Final Grade", y = "Count")
+```
+
+### By Theme
+
+```{r}
+ggplot(Y, aes(x = final_grade, group = themed)) +
+  geom_bar() +
+  facet_grid(themed ~ ., labeller = as_labeller(c(N = "Not Themed", Y = "Themed"))) +
+  labs(x = "Final Grade", y = "Count", bar = "Theme")
+
+ggplot(Y, aes(x = final_grade, fill = themed)) +
+  geom_bar(mapping = aes(y = after_stat(prop)), position = position_dodge()) +
+  labs(x = "Final Grade", y = "Proportion", fill = "Themed") +
+  scale_y_continuous(labels = scales::percent)
+
+ggplot(Y, aes(x = final_grade, fill = themed)) +
+  geom_bar(mapping = aes(y = after_stat(prop)), position = position_dodge()) +
+  facet_grid(cum_gpa_bin ~ .) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Final Grade", y = "Proportion", fill = "Themed")
+
+```
+
+```{r}
+ggplot(Y, aes(x = factor(final_grade), y = cum_gpa)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(mapping = aes(col = themed)) +
+  labs(x = "Final Grade", y = "Cumulative GPA", col = "Themed")
+```
+
+```{r}
+
+```
+
+
+
+## Statistical Questions
+
+### Question 1
+
+Is the grade distribution different by theme?  Test at alpha = 0.05.
+
+```{r}
+t.test(x = Y %>% dplyr::filter(themed == "Y") %>% dplyr::select(final_grade),
+       y = Y %>% dplyr::filter(themed == "N") %>% dplyr::select(final_grade))
+```
+
+There is insufficient evidence to conclude that the mean grade is different by theme.
+
+### Question 2
+
+After accounting for cumulative GPA, does the theme of the class
+significantly contribute to the mean grade?
+
+```{r}
+lm1 <- lm(final_grade ~ themed + cum_gpa, data = Y)
+summary(lm1)
+```
+
+There is insufficient evidence at alpha = 0.05 to conclude
+that the class theme contributes to the final grade
+when GPA is taken into account.
+
+### Question 3
+
+Is the proportion of DFFNW different for themed classes
+
+```{r}
+temp <- Y %>%
+  dplyr::group_by(themed) %>%
+  dplyr::summarize(n = n(),
+                   dffnw = length(which(final_grade == 0)))
+
+prop.test(temp$dffnw, temp$n)
+```
+
+There is insufficient evidence that the theme contributes to the proportion
+of DFFNW.
+
+### Question 4
+
+Does the theme contribute to the proportion of DFFNW after accounting for GPA?
+
+```{r}
+temp <- Y %>% dplyr::mutate(dffnw = ifelse(final_grade == 0, 1, 0))
+
+glm1 <- glm(dffnw ~ themed + cum_gpa, data = temp, family = binomial(link = "logit"))
+summary(glm1)
+```
+
+There is insufficient evidence to conclude that the theme of the class contributes
+to the proportion of DFFNW after accounting for cumulative GPA.
+
+### Question 5
+
+Aunt Nancy's Special Question:  Are the proportions of the grades different overall?
+
+```{r}
+temp <- Y %>%
+  dplyr::group_by(themed, final_grade) %>%
+  dplyr::summarize(n = n(),
+                   .groups = "rowwise") %>%
+  reshape2::dcast(final_grade ~ themed, value.var = "n")
+
+chisq.test(x = temp[,-1])
+```
+
+
+There is sufficient evidence to conclude that the proportions of grades in each
+category are different between the themed and non-themed classes.
+
+### Question 6
+
+Are the proportions of the grades different after taking GPA into account?
+
+```{r}
+plm1 <- MASS::polr(as.factor(final_grade) ~ cum_gpa + themed, data = Y)
+plm0 <- MASS::polr(as.factor(final_grade) ~ cum_gpa, data = Y)
+anova(plm1, plm0)
+summary(plm1)
+```
+
+There is insufficient evidence to conclude that the proportions of grades in each
+category are different between the themed and non-themed classes after accounting
+for student GPA.
+
+## Overall Conclusion
+
+The GPA of the student is a strong predictor of the final grade in the class.  The observed
+difference in grade distribution (Question 5) is accounted for by the GPAs of the 
+students choosing to take the themed vs non-themed class, and not by the theme itself (Question 6).

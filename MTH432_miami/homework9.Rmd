@@ -1,0 +1,382 @@
+---
+title: "Homework9"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+KKT Theorem
+
+minimize $f(x)$
+
+subject to $g_i(x) \le 0$, $h_j(x) = 0$
+
+$$\mathcal{L}(x, \lambda) = f(x) + \sum_{i} \lambda_i g_i(x) + \sum_{j} \lambda_j h_j(x)$$
+
+## 1
+
+min{$x^2-y^2\ |\ 2x+y^2-2 \le 0$}
+
+```{python, results='asis'}
+import sympy as sy
+
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+lambda_ = sy.Symbol('lambda', real = True, nonnegative = True)
+lambda1 = sy.Symbol('lambda1', real = True, nonnegative = True)
+lambda2 = sy.Symbol('lambda2', real = True, nonnegative = True)
+lambda3 = sy.Symbol('lambda3', real = True, nonnegative = True)
+```
+
+### minimize
+
+```{python, results='asis'}
+f = x**2 - y**2
+L = f + lambda_*(2*x + y**2 -2 )
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print(f"$$L = {L.subs(res[0]).evalf()}$$")
+print(f"$$L = {L.subs(res[1]).evalf()}$$")
+
+print("$$" + "f_{min} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+print("$$" + "f_{min} = " + f"{f.subs(res[1]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y])
+print("The result is a minimum because the determinant of the bordered hessian has a sign of $(-1)^m=(-1)^1=-1$ where m is the number of constraints")
+print("$$H = " + sy.latex(hess.subs(res[0]).evalf()) + "$$")
+print("$$det(H) = " + f"{hess.subs(res[0]).evalf().det()}" + "$$")
+```
+
+check the min and max
+
+```{r}
+f <- function(x,y) x^2 - y^2
+x <- seq(-8, 1,length = 100)
+y <- matrix(NA, nrow=length(x), ncol=length(x))
+for (i in seq_along(x)) {
+  y[,i] <- seq(-sqrt(2-2*x[i]), sqrt(2-2*x[i]), length = 100)
+}
+res <- matrix(NA, nrow=length(x), ncol=length(x))
+for (i in seq_along(x)) {
+  res[,i] <- f(x[i], y[,i])
+}
+```
+
+Minimum f = `r c(res)[which.min(res)]`
+
+Minimum location = `r c(x[arrayInd(which.min(res), dim(res))[2]], y[arrayInd(which.min(res), dim(res))])`
+
+## 2
+
+### minimize
+
+```{python, results='asis'}
+f = -x
+L = f + lambda1*(y-(1-x)**3) + lambda2*(-y)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+res = [{x: 1, y: 0}]
+
+print("$$" + sy.latex(res[0]) + "$$")
+
+print("$$" + "L_{min1} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda1,lambda2,x,y])
+print("$$H = " + sy.latex(hess.subs(res[0]).evalf()) + "$$")
+print("$$det(H) = " + f"{hess.subs(res[0]).evalf().det()}" + "$$")
+```
+
+check the min
+
+```{r}
+f <- function(x,y) -x
+sims <- 100
+x <- seq(-1, 3,length = sims)
+y <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  y[,i] <- seq(-8, 8, length = sims)
+}
+res <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  res[,i] <- ifelse(y[,i] >= 0 & y[,i] - (1-x[i])^3 <= 0, -x[i], NA)
+}
+```
+
+Minimum f = `r c(res)[which.min(res)]`
+
+Minimum location = `r c(x[arrayInd(which.min(res), dim(res))[2]], y[arrayInd(which.min(res), dim(res))])`
+
+```{r}
+X <- data.frame(x = rep(x, each = sims),
+                y = rep(seq(-8, 8, length = sims), times = sims))
+plot(X$x, rep(0, length(X$x)), col = "blue", type = "l", ylim = c(-8, 8), ylab = "y", xlab="x")
+lines(X$x, (1-X$x)^3, col = "red")
+X$plot <- ifelse(X$y >= 0 & X$y - (1-X$x)^3 <= 0, 1, 0)
+points(X$x[X$plot==1], X$y[X$plot==1], cex = 0.5, pch = 19)
+```
+
+## 3
+
+### minimize
+
+```{python, results='asis'}
+f = sy.exp(-x-y)
+L = f - lambda1*(sy.exp(x) + sy.exp(y) - 20) + lambda2*(-x)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+```
+
+Sympy is not able to solve this system of equations.  Continuing by hand:
+
+
+$$\frac{dL}{dx} = -e^{-x-y} + \lambda_1 e^x - \lambda_2$$
+
+$$\frac{dL}{dy} = -e^{-x-y} + \lambda_1 e^y$$
+
+$$\lambda_1 = e^{-x-2y}$$
+
+$$\lambda_2 = e^{-2y} - e^{-x-y}$$
+
+if $\lambda_2 = 0$ (turn off the second constraint) then $x = y$
+
+$\lambda_1 = 0$ is not a possible solution
+
+Now using the constraint,
+
+$$e^x + e^y - 20 \le 0$$
+
+$$2e^{x} \le 20$$
+
+$$x = y \le \ln(10)$$
+
+The minimum $L$ has a value of $\frac{1}{100}$ 
+
+check the min 
+
+```{r}
+f <- function(x) {
+  ifelse(exp(x[1]) + exp(x[2]) - 20 <= 0 & -x[1] <= 0, exp(-x[1]-x[2]), 1000)
+}
+
+o <- optim(c(0, 0), f)
+o$par
+
+log(10)
+```
+
+plot
+
+```{r}
+sims <- 500
+x <- seq(-3, log(20), length = sims)
+y1 <- log(20 - exp(x))
+
+plot(x, y1, type = 'l', col = "red", lwd = 2)
+abline(v = 0, col = "blue")
+polygon(c(0, seq(0, log(20), length = 101), log(20)), 
+        c(-50, log(20 - exp(seq(0, log(20), length = 101))), -50) - 0.2,
+        col = "black")
+```
+
+## 4
+
+### minimize
+
+```{python, results='asis'}
+f = 7 - 3*x**2 - y**2 + 5*y
+L = f + lambda1*(-x+y-2) + lambda2*(5*x+y-8) + lambda3*(-x-2*y-2)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2, lambda3])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+```
+
+No solution with all three constraints.  
+
+Turn off constraint $\lambda_1$
+
+```{python, results='asis'}
+L = f + lambda2*(5*x+y-8) + lambda3*(-x-2*y-2)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda2, lambda3])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res).evalf()}" + "$$")
+```
+
+Turn off constraint $\lambda_2$
+
+```{python, results='asis'}
+L = f + lambda1*(-x+y-2) + lambda3*(-x-2*y-2)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda3])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res).evalf()}" + "$$")
+```
+
+Turn off constraint $\lambda_3$
+
+```{python, results='asis'}
+L = f + lambda1*(-x+y-2) + lambda2*(5*x+y-8)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+```
+
+No solution.
+
+since the minimum corner is on constraint 2 and 3, check those separately
+
+turn off 1 and 2
+
+```{python, results='asis'}
+L = f + lambda3*(-x-2*y-2)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda3])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res).evalf()}" + "$$")
+```
+
+turn off 1 and 3
+
+```{python, results='asis'}
+L = f + lambda2*(5*x+y-8)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res).evalf()}" + "$$")
+```
+
+turn off all constraints to look for a minimum inside the region
+
+```{python, results='asis'}
+L = f
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res).evalf()}" + "$$")
+```
+
+Therefore the global minimum is at (2, -2)
+
+
+check the min
+
+```{r}
+f <- function(x) {
+  ifelse(-x[1]+x[2]-2 <= 0 & 5*x[1]+x[2]-8 <= 0 & -x[1]-2*x[2]-2 <= 0,
+         7-3*x[1]^2-x[2]^2+5*x[2], 10000)
+}
+
+o <- optim(c(0, 0), f)
+o$par
+```
+
+plot
+
+```{r}
+sims <- 500
+x <- seq(-5, 5, length = sims)
+y1 <- x + 2
+y2 <- 8 - 5*x
+y3 <- -0.5*x - 1
+
+plot(x, y1, type = 'l', col = "red", lwd = 2)
+lines(x, y2, col = "blue")
+lines(x, y3, col = "green")
+```

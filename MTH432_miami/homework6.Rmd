@@ -1,0 +1,277 @@
+---
+title: "Homework6"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+Let $f(x_1, x_2) = 2x_1^4+x_2^2-4x_1x_2+5x_2$
+
+### a)
+
+Compute the first two terms $x^{(1)}$, $x^{(2)}$ of the Newton's method sequence
+for finding a critical point of $f$ with the initial point $x^{(0)} = (0,0)$
+
+
+Newton's method
+
+$$x^{(k+1)} = x^{(k)} - (\nabla^2 f(x^{(k)}))^{-1} \nabla f(x^{(k)})$$
+
+
+```{python}
+import sympy as sy
+
+x1 = sy.Symbol('x1', real = True)
+x2 = sy.Symbol('x2', real = True)
+
+f = 2*x1**4+x2**2-4*x1*x2+5*x2
+print(f"f = {f}")
+gradf = sy.Matrix([f]).jacobian([x1, x2])
+print(gradf)
+hessf = sy.hessian(f, [x1, x2])
+print(hessf)
+
+xsup1 = sy.Matrix([[0],[0]]) - hessf.subs({x1: 0, x2: 0}).evalf().inv() * gradf.subs({x1: 0, x2: 0}).evalf().transpose()
+
+print(f"ANSWER xsup1 = {xsup1}")
+
+xsup2 = xsup1 - hessf.subs({x1: xsup1[0], x2: xsup1[1]}).evalf().inv() * gradf.subs({x1: xsup1[0], x2: xsup1[1]}).evalf().transpose()
+
+print(f"ANSWER xsup2 = {xsup2}")
+
+xsup3 = xsup2 - hessf.subs({x1: xsup2[0], x2: xsup2[1]}).evalf().inv() * gradf.subs({x1: xsup2[0], x2: xsup2[1]}).evalf().transpose()
+
+print(xsup3)
+
+xsup4 = xsup3 - hessf.subs({x1: xsup3[0], x2: xsup3[1]}).evalf().inv() * gradf.subs({x1: xsup3[0], x2: xsup3[1]}).evalf().transpose()
+
+print(xsup4)
+
+xsup5 = xsup4 - hessf.subs({x1: xsup4[0], x2: xsup4[1]}).evalf().inv() * gradf.subs({x1: xsup4[0], x2: xsup4[1]}).evalf().transpose()
+
+print(xsup5)
+```
+
+check that the function gets closer to the critical point with each iteration
+
+```{python}
+print(f.subs({x1: 0, x2: 0}).evalf())
+print(f.subs({x1: xsup1[0], x2: xsup1[1]}).evalf())
+print(f.subs({x1: xsup2[0], x2: xsup2[1]}).evalf())
+print(f.subs({x1: xsup3[0], x2: xsup3[1]}).evalf())
+print(f.subs({x1: xsup4[0], x2: xsup4[1]}).evalf())
+print(f.subs({x1: xsup5[0], x2: xsup5[1]}).evalf())
+print(f.subs({x1: -1.380409, x2: -5.260818}).evalf())
+
+```
+
+Check for the function optimum starting at (0,0)
+
+```{r}
+optim(c(0,0), fn = function(x) {2*x[1]^4+x[2]^2-4*x[1]*x[2]+5*x[2]}, 
+      gr = function(x) {c(8*x[1]^3-4*x[2], 2*x[2]-4*x[1]+5)})
+```
+
+### b)
+
+Steepest Descent Method
+
+$$x^{(k+1)} = x^{(k)} - t_k \nabla f(x^{(k)})$$
+
+where $t = t_k$, $t_k > 0$ minimizes $\phi_k$
+
+$$\phi_k(t) = f(x^{(k)} - t \nabla f(x^{(k)}))$$
+
+using
+
+$$\phi'(t) = -\nabla f(x^{(k)} - t \nabla f(x^{(k)})) \cdot \nabla f(x^{(k)})$$
+
+```{python}
+t = sy.Symbol('t', real = True)
+
+gradf_xsup0 = gradf.subs({x1: 0, x2: 0})
+print(gradf_xsup0)
+
+dphi_xsup0 = -1*gradf.subs({x1: 0-t*gradf_xsup0[0], x2: 0-t*gradf_xsup0[1]}).evalf().dot(gradf_xsup0)
+print(dphi_xsup0)
+
+t0 = sy.solve(dphi_xsup0, t)[0]
+print(t0)
+
+xsup1 = sy.Matrix([[0],[0]]) - t0*gradf_xsup0.transpose()
+print(f"ANSWER xsup1 = {xsup1}")
+
+gradf_xsup1 = gradf.subs({x1: xsup1[0], x2: xsup1[1]})
+print(gradf_xsup1)
+
+dphi_xsup1 = -1*gradf.subs({x1: xsup1[0]-t*gradf_xsup1[0], x2: xsup1[1]-t*gradf_xsup1[1]}).evalf().dot(gradf_xsup1)
+print(dphi_xsup1)
+
+t1 = sy.solve(dphi_xsup1, t)[0]
+print(t1)
+
+xsup2 = xsup1 - t1*gradf_xsup1.transpose()
+print(f"ANSWER xsup2 = {xsup2}")
+
+gradf_xsup2 = gradf.subs({x1: xsup2[0], x2: xsup2[1]})
+print(gradf_xsup2)
+
+dphi_xsup2 = -1*gradf.subs({x1: xsup2[0]-t*gradf_xsup2[0], x2: xsup2[1]-t*gradf_xsup2[1]}).evalf().dot(gradf_xsup2)
+print(dphi_xsup2)
+
+t2 = sy.solve(dphi_xsup2, t)[0]
+print(t2)
+
+xsup3 = xsup2 - t1*gradf_xsup2.transpose()
+print(xsup3)
+```
+
+Check that the function converges to the minimum
+
+```{python}
+print(f.subs({x1: 0, x2: 0}).evalf())
+print(f.subs({x1: xsup1[0], x2: xsup1[1]}).evalf())
+print(f.subs({x1: xsup2[0], x2: xsup2[1]}).evalf())
+print(f.subs({x1: xsup3[0], x2: xsup3[1]}).evalf())
+print(f.subs({x1: -1.380409, x2: -5.260818}).evalf())
+```
+## 2
+
+### a)
+
+Compute the quadratic approximation $f_k(x_1,x_2)$ for the function $f(x_1,x_2)=8x_1^2+8x_2^2-x_1^4-x_2^4-1$ at the point (1,2)
+
+Multivariate Taylor Series
+
+$$f(x) = f(x_0) + \nabla f(x_0) \cdot (x-x_0)+\frac{1}{k!}(x-x_0)^T\nabla^2f(x_0) (x-x_0)$$
+
+```{python}
+f = 8*x1**2 + 8*x2**2-x1**4-x2**4-1
+print(f"f = {f}")
+gradf = sy.Matrix([f]).jacobian([x1, x2])
+print(gradf)
+hessf = sy.hessian(f, [x1, x2])
+print(hessf)
+
+x0 = sy.Matrix([1,2])
+x_m_x0 = sy.Matrix([x1-x0[0], x2-x0[1]])
+
+approxf = f.subs({x1:x0[0], x2:x0[1]}) + gradf.subs({x1:x0[0], x2:x0[1]}).dot(x_m_x0) + 1/2 * (x_m_x0.transpose() * hessf.subs({x1:x0[0], x2:x0[1]}) * x_m_x0)[0]
+print(approxf)
+print(approxf.expand().simplify())
+```
+
+$$f_2(x_1,x_2) = 22+12(x_1-1)+2(x_1-1)^2-16(x_2-2)^2$$
+
+### b)
+
+Critical point of $f_2(x_1,x_2)$
+
+```{python}
+print(f"x* = {sy.solve(sy.Matrix([approxf]).jacobian([x1,x2]), {x1,x2})}")
+```
+
+Original function critical points as a check.  The approximation critical point
+should be near or at a real critical point.
+
+```{python}
+sy.solve(sy.Matrix([f]).jacobian([x1,x2]), {x1,x2})
+```
+
+## 3
+
+Let $f: \mathbb{R}^n \rightarrow \mathbb{R}$ be a function with continuous first-order partial
+derivatives on $\mathbb{R}^n$, and let $M$ be a subspace of $\mathbb{R}^n$
+
+### a)
+
+Suppose $x^* \in M$ minimizes $f$ on $M$.  Show that $\nabla f(x^*) \in M^{\perp}$
+
+Let $x \in M$, $\phi(t) = f(x^* + tx))$
+
+Since $f$ is minimized at $x^*$ then we also expect that $t=0$ will minimize
+$\phi(t)$.
+
+Now $\phi' = \nabla f(x^* + tx) \cdot x$, but $t=0$
+
+$\phi' = \nabla f(x^*) \cdot x = 0$ at the minimum
+
+$\nabla f(x^*) \cdot x = 0$ implies that $\nabla f(x^*)$ is orthogonal to all $x \in M$
+
+therefore $\nabla f(x^*) \in M^{\perp}$
+
+### b)
+
+Under the assumption that $f$ is also convex, show that any $x^* \in M$ such that
+$\nabla f(x^*) \in M^\perp$ is a global minimizer of $f$ on $M$
+
+Let $x,y \in \mathbb{R}^n$, then $f$ is convex if and only if 
+
+$$f(y) \ge f(x) + \nabla f(x) \cdot (y-x)$$
+
+Therefore, 
+
+$$f(x^*+tx) \ge f(x^*) + \nabla f(x^*) \cdot (x^*+tx-x^*)$$
+
+$$f(x^*+tx) \ge f(x^*) + t \nabla f(x^*) \cdot (x)$$
+
+But if $\nabla f(x^*) \in M^\perp$ then $\nabla f(x^*) \cdot x = 0$
+
+$$f(x^*+tx) \ge f(x^*)$$
+
+Therefore $f$ at any other location in $\mathbb{R}^n$ is larger than $f$ at $x^*$,
+and $x^*$ is the global minimizer of $f$
+
+## 4
+
+Let $f: \mathbb{R}^n \rightarrow \mathbb{R}$ be defined by $f(x) = a + b \cdot x + \frac{1}{2} x \cdot Ax$, where $a \in \mathbb{R}$ and $b \in \mathbb{R}^n$, and A is a symmetric positive definite
+$n x n$ matrix.  As we've see in class, $f$ has a unique minimizer $x^*$ that satisfies the equation
+$Ax^* = -b$.  Show that if $x^{(0)}$ is chosen so that $x^{(0)} - x^*$ is an eigenvector of A,
+then the steepest descent method reaches $x^*$ in
+one step, $x^{(1)} = x^*$.
+
+$$\nabla f(x) = b + Ax$$
+
+since A is symmetric.
+
+let $v$ be an eigenvector of $A$ and choose $x^{(0)}$ such that $v = x^{(0)} -x^*$
+
+Since $v$ is an eigenvector, we can say is has an associated eigenvalue $\lambda$
+where $Av = \lambda v$
+
+$$\nabla f(x^{(0)}) = \nabla f(v + x^*) = b + A(v + x^*) = b + Av + Ax^* = b + \lambda v -b = \lambda v$$
+
+$$\phi'(t) = -\nabla f(x^{(0)} - t \nabla f(x^{(0)})) \cdot \nabla f(x^{(0)})$$
+
+$$ = -\nabla f(v + x^* -t \lambda v) \cdot \lambda v$$
+
+$$ = -[b+ A(v+x^*-t\lambda v)] \cdot \lambda v$$
+
+$$ = -[b + \lambda v -b -t \lambda^2 v] \cdot \lambda v$$
+
+$$ = [-\lambda v + t \lambda^2 v] \cdot \lambda v$$
+
+$$ = -\lambda^2 v \cdot v + t \lambda^3 v \cdot v = -\lambda^2 v \cdot v (1-t\lambda) = 0$$
+
+$$t = \frac{1}{\lambda}$$
+
+$$x^{(1)} = x^{(0)} - t \nabla f(x^{(0)})$$
+
+$$x^{(1)} = (v + x^*) - t [b + A(v + x^*)]$$
+
+$$x^{(1)} = (v + x^*) - \frac{1}{\lambda} [b + \lambda v -b)]$$
+
+$$ = (v + x^*) - v = x^*$$
+
+
+
+

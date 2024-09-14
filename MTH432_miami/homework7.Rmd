@@ -1,0 +1,478 @@
+---
+title: "Homework7"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+KKT Theorem
+
+minimize $f(x)$
+
+subject to $g_i(x) \le 0$, $h_j(x) = 0$
+
+$$\mathcal{L}(x, \lambda) = f(x) + \sum_{i} \lambda_i g_i(x) + \sum_{j} \lambda_j h_j(x)$$
+
+## 1
+
+min,max{$(x-1)^2 + (y-2)^2 + (z-3)^2\ |\ x^2+y^2+z^2-1=0$}
+
+```{python, results='asis'}
+import sympy as sy
+
+x = sy.Symbol('x', real = True)
+y = sy.Symbol('y', real = True)
+z = sy.Symbol('z', real = True)
+lambda_ = sy.Symbol('lambda', real = True, nonnegative = True)
+lambda1 = sy.Symbol('lambda1', real = True, nonnegative = True)
+lambda2 = sy.Symbol('lambda2', real = True, nonnegative = True)
+```
+
+### minimize
+
+```{python, results='asis'}
+f = (x-1)**2 + (y-2)**2 + (z-3)**2
+L = f + lambda_*(x**2 + y**2 + z**2 -1)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, z, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print(f"$$L = {L.subs(res[0]).evalf()}$$")
+print("$$" + "f_{min} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y,z])
+print("The result is a minimum because both the 3rd and 4th minor determinant of the bordered hessian have a sign of $(-1)^m=(-1)^1=-1$ where m is the number of constraints")
+print("$$H_3 = " + sy.latex(hess.subs(res[0]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+### maximize
+
+```{python, results='asis'}
+L = f - lambda_*(x**2 + y**2 + z**2 -1)
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, z, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res) + "$$")
+
+print(f"$$L = {L.subs(res[0]).evalf()}$$")
+print("$$" + "f_{max} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y,z])
+print("The result is a maximum because both the 3rd and 4th minor determinant of the bordered hessian have alternating signs")
+print("$$H_3 = " + sy.latex(hess.subs(res[0]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+check the min and max
+
+```{r}
+f <- function(x,y,z) (x-1)^2 + (y-2)^2 + (z-3)^2
+x <- seq(-1, 1,length = 100)
+y <- matrix(NA, nrow=length(x), ncol=length(x))
+for (i in seq_along(x)) {
+  y[,i] <- seq(-sqrt(1-x[i]^2), sqrt(1-x[i]^2), length = 100)
+}
+zpos <- matrix(NA, nrow=length(x), ncol=length(x))
+zneg <- matrix(NA, nrow=length(x), ncol=length(x))
+for (i in seq_along(x)) {
+  zpos[,i] <- sqrt(pmax(1-x[i]^2-y[,i]^2, 0))
+  zneg[,i] <- -1*sqrt(pmax(1-x[i]^2-y[,i]^2, 0))
+}
+res_pos <- matrix(NA, nrow=length(x), ncol=length(x))
+res_neg <- matrix(NA, nrow=length(x), ncol=length(x))
+for (i in seq_along(x)) {
+  res_pos[,i] <- f(x[i], y[,i], zpos[,i])
+  res_neg[,i] <- f(x[i], y[,i], zneg[,i])
+}
+```
+
+Minimum f = `r c(res_pos)[which.min(res_pos)]`
+
+Maximum f = `r c(res_neg)[which.max(res_neg)]`
+
+Minimum location = `r c(x[arrayInd(which.min(res_pos), dim(res_pos))[2]], y[arrayInd(which.min(res_pos), dim(res_pos))], zpos[arrayInd(which.min(res_pos), dim(res_pos))])`
+
+Maximum location = `r c(x[arrayInd(which.max(res_neg), dim(res_neg))[2]], y[arrayInd(which.max(res_neg), dim(res_neg))], zneg[arrayInd(which.max(res_neg), dim(res_neg))])`
+
+## 2
+
+### minimize
+
+```{python, results='asis'}
+f = x*z + y**2
+L = f + lambda_*(x**2 + y**2 + z**2 - 4)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, z, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res[0]) + "$$")
+print("$$" + sy.latex(res[1]) + "$$")
+
+print("$$" + "L_{min1} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+print("$$" + "L_{min2} = " + f"{L.subs(res[1]).evalf()}" + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+print("$$" + "f_{min2} = " + f"{f.subs(res[1]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y,z])
+print("The first result is a minimum because both the 3rd and 4th minor determinant of the bordered hessian have a sign of $(-1)^m=(-1)^1=-1$ where m is the number of constraints")
+print("$$H_3 = " + sy.latex(hess.subs(res[0]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+
+print("The second result is a minimum because both the 3rd and 4th minor determinant of the bordered hessian have a sign of $(-1)^m=(-1)^1=-1$ where m is the number of constraints")
+print("$$H_3 = " + sy.latex(hess.subs(res[1]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[1]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+### maximize
+
+```{python, results='asis'}
+L = f - lambda_*(x**2 + y**2 + z**2 - 4)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, z, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res[0]) + "$$")
+print("$$" + sy.latex(res[1]) + "$$")
+print("$$" + sy.latex(res[2]) + "$$")
+print("$$" + sy.latex(res[3]) + "$$")
+
+print("$$" + "L_{min1} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+print("$$" + "L_{min2} = " + f"{L.subs(res[1]).evalf()}" + "$$")
+print("$$" + "L_{min3} = " + f"{L.subs(res[2]).evalf()}" + "$$")
+print("$$" + "L_{min4} = " + f"{L.subs(res[3]).evalf()}" + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+print("$$" + "f_{min2} = " + f"{f.subs(res[1]).evalf()}" + "$$")
+print("$$" + "f_{min3} = " + f"{f.subs(res[2]).evalf()}" + "$$")
+print("$$" + "f_{min4} = " + f"{f.subs(res[3]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y,z])
+print("The first result is a maximum because both the 3rd and 4th minor determinant of the bordered hessian have alternating signs")
+print("$$H_3 = " + sy.latex(hess.subs(res[0]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+
+print("The second result is a maximum because both the 3rd and 4th minor determinant of the bordered hessian have alternating signs")
+print("$$H_3 = " + sy.latex(hess.subs(res[1]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[1]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+
+print("The Third result is a maximum because both the 3rd and 4th minor determinant of the bordered hessian have alternating signs")
+print("$$H_3 = " + sy.latex(hess.subs(res[2]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[2]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+
+print("The fourth result is a maximum because both the 3rd and 4th minor determinant of the bordered hessian have alternating signs")
+print("$$H_3 = " + sy.latex(hess.subs(res[3]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+print("$$H_4 = " + sy.latex(hess.subs(res[3]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+check the min and max
+
+```{r}
+f <- function(x,y,z) x*z + y^2
+sims <- 500
+x <- seq(-4, 4,length = sims)
+y <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  y[,i] <- seq(-sqrt(pmax(4-x[i]^2, 0)), sqrt(pmax(4-x[i]^2, 0)), length = sims)
+}
+zpos <- matrix(NA, nrow=sims, ncol=sims)
+zneg <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  zpos[,i] <- sqrt(pmax(4-x[i]^2-y[,i]^2, 0))
+  zneg[,i] <- -1*sqrt(pmax(4-x[i]^2-y[,i]^2, 0))
+}
+res_pos <- matrix(NA, nrow=sims, ncol=sims)
+res_neg <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  res_pos[,i] <- f(x[i], y[,i], zpos[,i])
+  res_neg[,i] <- f(x[i], y[,i], zneg[,i])
+}
+```
+
+Minimum f = `r c(res_pos)[which.min(res_pos)]`
+
+Maximum f = `r c(res_neg)[which.max(res_neg)]`
+
+Minimum location = `r c(x[arrayInd(which.min(res_pos), dim(res_pos))[2]], y[arrayInd(which.min(res_pos), dim(res_pos))], zpos[arrayInd(which.min(res_pos), dim(res_pos))])`
+
+Maximum location = `r c(x[arrayInd(which.max(res_neg), dim(res_neg))[2]], y[arrayInd(which.max(res_neg), dim(res_neg))], zneg[arrayInd(which.max(res_neg), dim(res_neg))])`
+
+## 3
+
+### minimize
+
+```{python, results='asis'}
+f = x**2
+L = f - lambda1*(x + 2*y -4) + lambda2*(-x + 2*y**2)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res[0]) + "$$")
+
+print("$$" + "L_{min} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+
+print("$$" + "f_{min} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda1, lambda2, x, y])
+print("The result is a minimum because the 4th minor determinant of the bordered hessian has a sign of $(-1)^m=(-1)^2=1$ where m is the number of constraints")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+### maximize
+
+```{python, results='asis'}
+f = x**2
+L = f - lambda1*(x + 2*y -4) - lambda2*(-x + 2*y**2)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, lambda1, lambda2])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res[0]) + "$$")
+
+print("$$" + "L_{min} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+
+print("$$" + "f_{min} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda1, lambda2, x, y])
+print("The result is a maximum")
+print("$$H_4 = " + sy.latex(hess.subs(res[0]).evalf()[0:4,0:4]) + "$$")
+print("$$det(H_4) = " + f"{hess.subs(res[0]).evalf()[0:4,0:4].det()}" + "$$")
+```
+
+check the min and max
+
+```{r}
+sims <- 500
+x <- seq(0, 10, length = sims)
+y1 <- -0.5*x+2
+y2 <- sqrt(0.5*x)
+y3 <- -sqrt(0.5*x)
+f <- function(x,y) x^2
+
+plot(x, y1, type = 'l', col = "red")
+lines(x, y2, col = "blue")
+lines(x, y3, col = "blue")
+points(c(2, 8), c(1, -2), pch=19, cex=2, col="black")
+```
+
+Minimum f = `r f(2, 1)`
+
+Maximum f = `r f(8, -2)`
+
+## 4
+
+### minimize
+
+```{python, results='asis'}
+f = x**2 -2*x + y**2
+L = f - lambda_*(x**2 + 2*y**2 - 4)
+
+print(f"$$f = {sy.latex(f)}$$")
+
+print("$$" + "\mathcal{L} =" + sy.latex(L) + "$$")
+
+gradL = sy.Matrix([L]).jacobian([x, y, z, lambda_])
+
+print("$$" + "\\nabla \mathcal{L} = " + sy.latex(gradL) + "$$")
+
+res = sy.solve(gradL)
+
+print("$$" + sy.latex(res[0]) + "$$")
+print("$$" + sy.latex(res[1]) + "$$")
+
+print("$$" + "L_{min1} = " + f"{L.subs(res[0]).evalf()}" + "$$")
+print("$$" + "L_{min2} = " + f"{L.subs(res[1]).evalf()}" + "$$")
+
+print("$$" + "f_{min1} = " + f"{f.subs(res[0]).evalf()}" + "$$")
+print("$$" + "f_{min2} = " + f"{f.subs(res[1]).evalf()}" + "$$")
+
+hess = sy.hessian(L, [lambda_,x,y])
+print("The first result has determinant 0")
+print("$$H_3 = " + sy.latex(hess.subs(res[0]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+
+print("The second result has determinant 0")
+print("$$H_3 = " + sy.latex(hess.subs(res[1]).evalf()[0:3,0:3]) + "$$")
+print("$$det(H_3) = " + f"{hess.subs(res[0]).evalf()[0:3,0:3].det()}" + "$$")
+```
+
+
+check the min and max
+
+```{r}
+f <- function(x,y) x^2 - 2*x + y^2
+sims <- 200
+x <- seq(-2, 2,length = sims)
+y <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  y[,i] <- seq(-sqrt(pmax(0.5*(4-x[i]^2), 0)), sqrt(pmax(0.5*(4-x[i]^2), 0)), length = sims)
+}
+res <- matrix(NA, nrow=sims, ncol=sims)
+for (i in seq_along(x)) {
+  res[,i] <- f(x[i], y[,i])
+}
+pts <- data.frame(x = rep(x, each = sims), y = c(y), z = c(res))
+
+plot(pts$x, pts$y, col=gray(pmax(pmin(pts$z/8, 1), 0)), xlab = "x", ylab = "y")
+points(c(-2, 2), c(0, 0), pch = 19, col = "red")
+
+```
+
+## 5
+
+Consider the constraint set $S = {(x,y) | g_i(x,y) \le 0, i = 1,\dots, 4}$ where
+
+$$g_1(x,y) = 4-x^2-y^2$$
+
+$$g_2(x,y) = y - 2$$
+
+$$g_3(x,y) = x + y - 6$$
+
+$$g_4(x,y) = x- y - 2$$
+
+```{r}
+x <- seq(-3, 6, length = 100)
+y10 <- ifelse(x >= -2 & x <= 2, sqrt(4-x^2), NA)
+y11 <- ifelse(x >= -2 & x <= 2, -sqrt(4-x^2), NA)
+y2 <- rep(2, length(x))
+y3 <- 6 - x
+y4 <- x - 2
+
+test <- expand.grid(x = x, y = seq(-3, 8, length = 100))
+g1 <- function(x,y) 4 - x^2 - y^2
+g2 <- function(x,y) y - 2
+g3 <- function(x,y) x + y - 6
+g4 <- function(x,y) x - y - 2
+test$test <- ifelse(g1(test$x, test$y) <= 0 &
+                      g2(test$x, test$y) <= 0 &
+                      g3(test$x, test$y) <= 0 &
+                      g4(test$x, test$y) <= 0, 1, 0)
+
+plot(x, y2, type = "l", col = "green", ylim = c(-3, 8))
+lines(x, y10, col = "blue")
+lines(x, y11, col = "blue")
+lines(x, y3, col = "red")
+lines(x, y4, col = "grey")
+points(test$x[which(test$test == 1)],
+       test$y[which(test$test == 1)],
+       pch = 19, cex = 0.5, col="black")
+points(c(0,0,4,-2), c(-2,2,2,0), pch = 19, col = "red", cex = 2)
+```
+
+### a J(0, -2)
+
+```{r}
+pt <- c(0, -2)
+g1(pt[1], pt[2])
+g2(pt[1], pt[2])
+g3(pt[1], pt[2])
+g4(pt[1], pt[2])
+```
+
+Not a regular point because the point is not at the intersection of all the equality  constraints
+
+### b J(0, 2)
+
+```{r}
+pt <- c(0, 2)
+g1(pt[1], pt[2])
+g2(pt[1], pt[2])
+g3(pt[1], pt[2])
+g4(pt[1], pt[2])
+```
+
+Not a regular point because the point is not at the intersection of all the equality constraints
+
+
+### c J(4, 2)
+
+```{r}
+pt <- c(4, 2)
+g1(pt[1], pt[2])
+g2(pt[1], pt[2])
+g3(pt[1], pt[2])
+g4(pt[1], pt[2])
+```
+
+Not a regular point because the point is not at the intersection of all the equality constraints
+
+### d J(0, -2)
+
+```{r}
+pt <- c(0, -2)
+g1(pt[1], pt[2])
+g2(pt[1], pt[2])
+g3(pt[1], pt[2])
+g4(pt[1], pt[2])
+```
+
+Not a regular point because the point is not at the intersection of all the equality constraints

@@ -1,0 +1,158 @@
+---
+title: "MTH 432 Oprimization"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+Matrix method
+
+```{r}
+dat <- data.frame(x0 = rep(1, 6), 
+                  x1 = c(-3, -2, -1, 1, 2, 4), 
+                  y = c(5, 0, 3, 8, 10, 7))
+X <- as.matrix(dat[,1:2])
+Y <- as.matrix(dat[,3])
+
+solve(t(X) %*% X) %*% t(X) %*% Y
+```
+
+linear model method
+
+```{r}
+lm1 <- lm(y ~ x1, data = dat)
+coef(lm1)
+```
+
+## 2
+
+Find the point in the set
+
+$$\left[ (x_1,x_2,x_3)|x_1 + 2x_2 + 4x_3=0, -3x_1-5x_2-9x_3 = 0 \right]$$
+that is nearest to the point (5, 1, 2)
+
+```{r}
+f <- function(x) sqrt((x[1] - 5)^2 + (x[2] - 1)^2 + (x[3] -2)^2)
+g <- function(x3) solve(matrix(c(1, -3, 2, -5), nrow=2), matrix(c(-4*x3, 9*x3)))
+# f(c(0, 0, 0)) - sqrt(30)
+# g(0)
+# g(1)
+h <- function(x3) f(c(g(x3), x3))
+# h(0)
+o <- optimize(h, c(-100, 100))
+c(g(o$minimum), o$minimum)
+```
+
+Check
+
+```{r}
+f(c(g(o$minimum-0.1), o$minimum-0.1))
+f(c(g(o$minimum), o$minimum))
+f(c(g(o$minimum+0.1), o$minimum+0.1))
+```
+
+Change variables and then change back
+
+```{r}
+A <- matrix(c(1, -3, 2, -5, 4, -9), nrow = 2)
+b <- matrix(c((-5-2-8), (15+5+18)), nrow = 2)
+t(A) %*% solve(A %*% t(A)) %*% b + c(5, 1, 2)
+```
+
+## 3
+
+Find the vector $v \epsilon \mathbf{R}^3$ of the form $v = \alpha(3,1,2) + \beta(2, 4, -5)$
+that is closest to (1, 2, -2)
+
+```{r}
+f <- function(v) sqrt((v[1] - 1)^2 + (v[2] - 2)^2 + (v[3] +2)^2)
+g <- function(a) a[1]*c(3,1,2) + a[2]*c(2,4,-5)
+h <- function(a) f(g(a))
+
+o <- optim(c(0,0), h)
+g(o$par)
+
+g(c(1/14, 4/9))
+```
+
+check
+
+```{r}
+f(g(o$par-0.05))
+f(g(o$par))
+f(g(o$par+0.05))
+```
+
+## 4
+
+Find the point in the plane $3x-4y+5z=200$ that is closest to the origin in $\mathbf{R}^3$
+
+```{r}
+f <- function(x) sqrt((x[1])^2 + (x[2])^2 + (x[3])^2)
+g <- function(x) c(x[1], x[2], 1/5*(200 - 3*x[1] + 4*x[2]))
+h <- function(x) f(g(x))
+
+o <- optim(c(0,0), h)
+g(o$par)
+```
+
+## 5
+
+$$Ax=b$$
+
+```{r}
+A <- matrix(c(1,1,1,
+              1,0,1,
+              2,0,5,
+              -7,8,0,
+              1,2,-1), ncol = 3, byrow = TRUE)
+b <- matrix(c(3,2,6,0,1), ncol = 1)
+solve(t(A) %*% A) %*% t(A) %*% b
+
+```
+
+## 6
+
+$Ax = b$ has a minimum $||x||$ solution at $x = A^T(AA^T)^{-1}b$
+
+```{r}
+A <- matrix(c(2, -1, 1, -1, 1, 3, 4, 2), nrow = 2)
+b <- matrix(c(2, 1), nrow = 2)
+t(A) %*% solve(A %*% t(A)) %*% b
+```
+
+## 7
+
+$$A^\dagger = (A^T A)^{-1} A^T$$
+
+### a
+
+$$A A^\dagger A = A$$
+$$A A^\dagger A = A (A^T A)^{-1} A^T A = A I = A$$
+
+### b
+
+$$A^\dagger A = (A^\dagger A)^\dagger$$
+
+$$A^\dagger A = (A^T A)^{-1} A^T A = I = (I^T I)^{-1} I = I^\dagger = (A^\dagger A)^\dagger$$
+
+### c
+
+The projection matrix $AA^\dagger$ is symmetric.
+
+$$(A A^\dagger)^T = (A (A^T A)^{-1} A^T)^T = A ((A^T A)^{-1})^T A^T = A (A^T A)^{-1} A^T = A A^\dagger$$
+
+since the $(A^TA)^{-1}$ is symmetric.
+
+### D
+
+$$(A A^\dagger)^2 = A A^\dagger$$
+
+$$(A A^\dagger)^2 = A (A^T A)^{-1} A^T A (A^T A)^{-1} A^T = A (A^T A)^{-1} I A^T = A (A^T A)^{-1} A^T = A A^\dagger$$
+

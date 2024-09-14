@@ -1,0 +1,146 @@
+---
+title: "MTH331-A"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+$\forall a, b \in \mathbb{Z}$, if $a-b$ is even, then $a+b$ is even
+
+If $a-b$ is even, $a-b=2k$ for some $k \in \mathbb{Z}$
+
+$$b = 2k -a$$
+
+then $$a + b = a + 2k -a = 2k$$
+
+Therefore, $a+b$ is even.
+
+## 2
+
+If $n$ is an odd integer, then $3n + 7$ is an even integer
+
+if $n$ is odd, then $n = 2k + 1$ for some $k \in \mathbb{Z}$
+
+$$3n+7 = 3(2k + 1) + 7 = 2(3k + 5)$$
+
+Because $3n+7$ is $2$ times an intger $(3k+5)$, it is even
+
+## 3
+
+Let $n \in \mathbb{Z}$.  If $15n$ is even, then $9n$ is even.
+
+If $15n$ is even, then $15n = 2(5k)$ for some $k \in \mathbb{Z}$, then
+
+$$15n = 2(5k)$$
+$$3n = 2k$$
+
+$$9n = 2(3k)$$
+
+Therefore, $9n$ is even
+
+## 4
+
+Let $x \in \mathbb{Z}$.  $3x+1$ is even $iff$ $5x-2$ is odd
+
+if $3x+1$ is even then $3x+1 = 2k$ for some $k \in \mathbb{Z}$
+
+$$3x+1 = 2k$$
+
+$$5x+1 = 2k + 2x$$
+
+$$5x-2 = 2k + 2x - 4 + 1$$
+
+$$5x -2 = 2(k + x - 2) + 1$$
+
+therefore $5x - 2$ is odd
+
+if $5x - 2$ is odd, then $5x -2 = 2k + 1$ for some $k \in \mathbb{Z}$
+
+$$5x - 2 = 2k + 1$$
+
+$$3x-2 = 2k-2x+1$$
+
+$$3x+1 = 2k-2x+4$$
+
+$$3x+1 = 2(k-x+2)$$
+
+Therefore $3x+1$ is even.
+
+## 5
+
+Let $x \in \mathbb{Z}$.  $x^3$ is even $iff$ $x$ is even
+
+if $x^3$ is even, then $x^3 = 2(4k^3)$ for some $k \in \mathbb{Z}$
+
+$$x^3 = 2(4k^3) = 8k^3$$
+
+$$x = \pm 2k$$
+
+Therefore, $x$ is even
+
+## 6
+
+Let $x \in \mathbb{Z}$.  If $5x-7$ is odd then $x$ is even
+
+if $5x -7$ is odd, then $5x-7 = 2k+1$ for some $k \in \mathbb{Z}$
+
+$$5x-7 = 2k+1$$
+
+$$5x = 2k + 8$$
+
+$$x = 2k + 8 - 4x$$
+
+$$x = 2(k + 8 - 2x)$$
+
+therefore, x is even
+
+## 7
+
+Let $x \in \mathbb{Z}$.  If $5x-7$ is odd, then $9x+2$ is even
+
+if $5x - 7$ is odd, then $5x-7 = 2k+1$ for some $k \in \mathbb{Z}$
+
+$$5x-7 = 2k+1$$
+
+$$5x+2 = 2k + 10$$
+
+$$9x+2 = 2k + 10 + 4x$$
+
+$$9x+2 = 2(k + 5 + 2x)$$
+
+Therefore $9x+2$ is even
+
+## 8
+
+Let $x \in \mathbb{Z}$.  $11x-7$ is even $iff$ $x$ is odd
+
+
+if $11x - 7$ is even, then $11x-7 = 2k$ for some $k \in \mathbb{Z}$
+
+$$11x-7=2k$$
+
+$$11x = 2k + 7$$
+
+$$x = 2k + 7 + 10x = 2k + 6 + 10x + 1 = 2(k+3+5x) + 1$$
+
+Therefore $x$ is odd
+
+if $x$ is odd, then $x = 2k + 1$ for some $k \in \mathbb{Z}$
+
+$$x = 2k + 1$$
+
+$$11x = 2k + 1 + 10x$$
+
+$$11x -7 = 2k -6 + 10x$$
+
+$$11x - 7 = 2(k - 3 + 10x)$$
+
+therefore $11x - 7$ is even

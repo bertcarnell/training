@@ -1,0 +1,21 @@
+---
+title: "MTH331 Homework 2"
+author: "Rob Carnell"
+date: '`r Sys.Date()`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Result 9
+
+Let $a \in \mathbb{Z}$.  If $7 | 4a$ then $7 | a$
+
+Because 7 is prime, we know:
+
+Suppose $7 | 4a$ then $4a = (2^2)(7)k$ where $k \in \mathbb{Z}$
+
+Therefore $a = 7k$, therefore $7 | a$
+

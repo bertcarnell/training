@@ -1,0 +1,211 @@
+---
+title: "MTH331-Wk2"
+author: "Rob Carnell"
+date: '`r Sys.Date()`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Result 9
+
+Let $x,y \in \mathbb{Z}$.  Then $x-y$ is even if and only if $x$ and $y$ have
+the same parity.
+
+Suppose $x-y$ is even, then for $m,k \in \mathbb{Z}$
+
+$$x-y = 2k$$
+
+$$x = 2k + y$$
+
+if $y$ is even, then
+
+$$x = 2k + 2m = 2(k + m)$$ 
+
+x is even.
+
+if $y$ is odd, then 
+
+$$x = 2k + (2m + 1) = 2(k + m) + 1$$
+
+$x$ is odd.
+
+therefore if $x-y$ is even, $x$ and $y$ must both be even or both be odd.
+
+Suppose $x$ and $y$ have the same parity and $m,k \in \mathbb{Z}$
+
+If $x$ and $y$ are both even, then
+
+$$x-y = 2k - 2m = 2(k-m)$$ 
+
+Therefore $x-y$ is even.
+
+If $x$ and $y$ are both odd, then
+
+$$x-y = (2k + 1) - (2m + 1) = 2(k-m)$$ 
+
+Therefore $x-y$ is even.
+
+Therefore if $x$ and $y$ have the same parity, $x-y$ is even.
+
+## Result 10.
+
+Let $x,y \in \mathbb{Z}$.  Then $x$ and $y$ have the same parity if and only if
+$x + y$ is even.
+
+Suppose $x+y$ is even, then for $m,k \in \mathbb{Z}$
+
+$$x + y = 2k$$
+
+$$x = 2k - y$$
+
+if $y$ is even, then
+
+$$x = 2k - 2m = 2(k - m)$$ 
+
+$x$ is even.
+
+if $y$ is odd, then 
+
+$$x = 2k - (2m + 1) = 2(k - m - 1) + 1$$
+
+$x$ is odd.
+
+therefore if $x+y$ is even, $x$ and $y$ must both be even or both be odd.
+
+Suppose $x$ and $y$ have the same parity and $m,k \in \mathbb{Z}$
+
+If $x$ and $y$ are both even, then
+
+$$x+y = 2k + 2m = 2(k+m)$$ 
+
+Therefore $x+y$ is even.
+
+If $x$ and $y$ are both odd, then
+
+$$x+y = (2k + 1) + (2m + 1) = 2(k+m+1)$$ 
+
+Therefore $x+y$ is even.
+
+Therefore if $x$ and $y$ have the same parity, $x+y$ is even.
+
+## Result 11
+
+Let $a,b \in \mathbb{Z}$.  Then $ab$ is even if and only if a is even or b is even.
+
+if $a$ and $b$ are even, then for $m,k \in \mathbb{Z}$
+
+$$ab = (2k)(2m) = 2(2km)$$
+
+Therefore $ab$ is even.
+
+if $a$ is even and $b$ is odd, then for $m,k \in \mathbb{Z}$
+
+$$ab = (2k)(2m+1) = 2(k(2m+1))$$
+
+Therefore $ab$ is even.
+
+The same result holds for $a$ odd and $b$ even.
+
+Therefore, if $a$ is even or $b$ is even, $ab$ is even.
+
+If $ab$ is even, then for $m,k,n \in \mathbb{Z}$
+
+$$ab = 2k$$
+
+Suppose both $a$ and $b$ are odd, then
+
+$$ab = (2n + 1)(2m + 1) = 4nm + 2m + 2n + 1 = 2(2nm + m + n) + 1 \ne 2k$$
+
+Therefore, at least one of $a$ and $b$ must be even (because they both can't be odd)
+
+## Result 12
+
+Let $a,b,c \in \mathbb{Z}$.  If $a$ divides $b$ and $b$ divides $c$, then $a$ divides $c$
+
+$a | b$ implies that  for $m,k \in \mathbb{Z}$, $ak = b$
+
+$b | c$ implies that $bm = c$
+
+$$bm = c$$
+
+$$(ak)m = c$$
+
+$$a(km) = c$$
+
+Therefore $a | c$
+
+## Result 13
+
+Let $a,b \in \mathbb{Z}$.  If $a^2$ does not divide $b^2$, then $a$ does not divide $b$
+
+If $a^2$ does not divide $b^2$ then for $k \in \mathbb{Z}$
+
+$$a^2(k^2) \ne b^2$$
+
+$$\pm ak \ne b$$
+
+Therefore $a$ does not divide $b$
+
+## Result 14
+
+Let $a,b,c \in \mathbb{Z}$.  If $a^2|b$ and $b^3|c$, then $a^6 | c$
+
+There exists $m,n \in \mathbb{Z}$ such that
+
+$$a^2m = b$$
+
+$$b^3n = c$$
+
+$$(a^2m)^3n = c$$
+
+$$a^6(m^3n) = c$$
+
+Therefore $a^6 | c$
+
+## Result 15
+
+Let $a \in \mathbb{Z}$.  if $5 | 2a$, then $5 | a$
+
+There exists $k \in \mathbb{Z}$ such that
+
+$$5k = 2a$$
+
+If $k$ is even, then
+
+$$5(2m) = 2a$$
+
+$$5m = a$$
+
+Therefore $5|a$
+
+$k$ cannot be odd by Result 11 because $5k = 2a$ means that $5k$ is even, and
+$5$ or $k$ must then be even, and therefore $k$ must be even.
+
+## Result 16
+
+Let $a \in \mathbb{Z}$.  if $7 | 4a$, then $7 | a$
+
+There exists $k,m,n \in \mathbb{Z}$ such that
+
+$$7k = 4a$$
+
+$k$ cannot be odd by Result 11 because $7k = 2(2a)$ means that $7k$ is even, and
+$7$ or $k$ must then be even, and therefore $k$ must be even.
+
+If $k$ is even, then
+
+$$7(2m) = 4a$$
+
+$$7m = 2a$$
+
+Similarly, $m$ cannot be odd by Result 11.  $m$ is even
+
+$$7(2n) = 2a$$
+
+$$7n = a$$
+
+$$7 | a$$
+

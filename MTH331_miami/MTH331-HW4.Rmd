@@ -1,0 +1,193 @@
+---
+title: "MTH331-Homework4"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Result 29
+
+If $a$ is an even integer and $b$ is an odd integer, then $4 \nmid (a^2 + b^2)$
+
+Let $a = 2k$ for $k \in \mathbb{Z}$ and $b = 2m + 1$ for $m \in \mathbb{Z}$ 
+
+$$a^2 + b^2 = (2k)^2 + (2m + 1)^2 = 4k^2 + 4m^2 + 4m + 1$$
+
+Therefore $4 \nmid 4k^2 + 4m^2 + 4m + 1$ because 4 is not a divisor of each term
+
+therefore $4 \nmid (a^2 + b^2)$
+
+## Result 30
+
+If $a,b \in \mathbb{Z}$, then $a^2-4b-3 \neq 0$
+
+Suppose $a^2-4b-3 = 0$
+
+if $b = 0$, $a^2 - 3$ cannot equal zero
+
+if $b < 0$, $a^2 + positive$ cannot equal zero
+
+if $b > 0$, then $4b - 3 > 0$, then
+
+$$(a - \sqrt{4b+3})(a + \sqrt{4b+3})$$
+
+
+
+
+
+
+
+
+Let $a,b,c \in \mathbb{Z}$. If $a|b$ and $c|d$, then $ac | bd$
+
+If $a|b$ and $c|d$, then there exists $n,m \in \mathbb{Z}$ such that
+
+$$an = b$$
+
+$$cm = d$$
+
+Then $bd = (an)(cm)$, and $ac | (an)(cm)$ and $ac | bd$
+
+## Result 18
+
+Suppose that $x,y \in \mathbb{R}$ If $x^2 + 5y = y^2 + 5x$ then $x=y$ or $x+y=5$
+
+If $x^2 + 5y = y^2 + 5x$ then
+
+$$x^2 - 5x = y^2 - 5y$$
+
+$$x=y$$
+
+Suppose $y = ax + b$
+
+$$x^2 -5x = (ax+b)^2 - 5(ax+b)$$
+
+$$x^2 -5x = a^2x^2 + 2abx + b^2 - 5ax -5b$$
+
+$$a^2 = 1$$
+
+$a = \pm 1$
+
+$$b^2 -5b = b(b-5) = 0$$
+
+$b=0$ or $b = 5$
+
+$$2ab -5a = a(2b-5) = -5$$
+
+if $b=0$, then $a=1$, therefore $y = x$
+
+if $b=5$, then $a=-1$, therefore $y = -x + 5$ or $x + y = 5$
+
+## Result 19
+
+Let $a,b \in mathbb{Z}$. If $a^2(b^2-2b)$ is odd, then $a$ and $b$ are odd.
+
+if $a^2(b^2 - 2b)$ is odd, then for $k \in \mathbb{Z}$
+
+$$a^2(b^2 - 2b) = 2k + 1$$
+
+$$a^2(b)(b-2) = 2k + 1$$
+
+Suppose $a=2m+x$ and $b = 2n+y$ for $m,n \in \mathbb{Z}$ and $x,y \in {0,1}$
+
+$$(2m+x)^2(2n+y)(2n+y-2) = (4m^2+4mx + x^2)(4n^2+2ny-4n+2ny+y^2-2y)$$
+
+now, $u,v \in \mathbb{Z}$. $4m^2 + 4mx$ is even so set it to $2u$. And $4n^2+2ny-4n+2ny-2y$ is even so set it to $2v$
+
+$$=(2u + x^2)(2v + y^2) = 2k + 1$$
+
+$$4uv + 2vx^2 + 2uy^2 + x^2y^2 = 2k + 1$$
+
+the only way for the left hand side to be odd is for $x^2y^2 = 1$ therefore both $x = 1$ and $y=1$ from the original definition of $x,y$. Therefore, both $a$ and $b$ are odd.
+
+## Result 20
+
+Let $x,y \in mathbb{Z}$. If $x^2(y+3)$ is even, then $x$ is even or $y$ is odd.
+
+if $x^2(y+3)$ is even, then $x^2(y+3) = 2k$
+
+Suppose $x=2m+a$ and $y = 2n+b$ for $m,n \in \mathbb{Z}$ and $a,b \in {0,1}$
+
+$$x^2(y+3) = (2m+a)^2(2n+b+3) = (4m^2+4ma+a^2)(2n+b+3)$$
+
+now, $u \in \mathbb{Z}$. $4m^2 + 4ma$ is even so set it to $2u$.
+
+$$(2u + a^2)(2n+b+3) = 2un + 2ub + 6u + 2na^2+ba^2 + 3a^2 = 2k$$
+
+$$ = 2(un+ub+3u+na^2) + ba^2 + 3a^2 = 2k$$
+
+Therefore $(b+3)a^2 = 0$
+
+Either $a=0$ or $b=-3$ corresponding to even $x$ or odd $y$
+
+## Result 21
+
+Suppose that $x \in \mathbb{R}$ if $x^5 + 7x^3 +5x \ge x^4+x^2+8$ then $x \ge 0$
+
+$$x^5 + 7x^3 +5x \ge x^4+x^2+8$$
+
+$$x(x^4+7x^2+5) \ge x^4+x^2+8$$
+
+Note that for all $x \in \mathbb{R}$, $(x^4+7x^2+5) \ge 5$ and $x^4+x^2+8 \ge 8$
+
+Therefore, $x \ne 0$ because $0 \ge 8$ is false
+
+$x$ cannot be negative because a negative number times a number greater than 5 would be a negative number and it can't be greater than 8.
+
+Therefore, $x > 0$
+
+In fact, there is a real root to the polynomial at approximately 0.863345, and $x \ge 0.8633456924760285478$
+
+```{r}
+f <- function(x) x^5-x^4+7*x^3-x^2+5*x-8
+uniroot(f, lower = 0, upper = 1, tol = 1E-12)
+f(0.8633456924760285478)
+```
+
+## Result 22
+
+Suppose that $x \in \mathbb{R}$. if $x^2 + 5x < 0$ then $x < 0$
+
+$$x^2 + 5x < 0$$
+
+$$x(x+5) < 0$$
+
+$x \ge 0$ is not allowed since $x(x+5)$ is positive
+
+$-5 < x < 0$ results in a true statement since $x(x+5)$ is negative
+
+$x < -5$ results in a false statement since $x(x+5)$ is positive
+
+Therefore $-5 < x < 0$
+
+## Result 23
+
+If $n$ is an odd integer, then $8|(n^2-1)$
+
+if $n$ is odd then for $k \in \mathbb{Z}$, $n = 2k+1$
+
+and $(n^2-1) = (2k+1)^2 -1 = 4k^2+4k + 1 - 1 = 4k(k+1)$
+
+$k$ can be either even, or odd
+
+if $k$ is even, then for $m \in \mathbb{z}$, $k = 2m$
+
+$$4k(k+1) = 4(2m)(2m+1) = 8m(2m+1)$$
+
+therefore $8|(n^2-1)$
+
+if $k$ is odd, then for $m \in \mathbb{z}$, $k = 2m + 1$
+
+$$4k(k+1) = 4(2m+1)(2m+1+1) = 8(2m+1)(m+1)$$
+
+therefore $8|(n^2-1)$
+
+## Result 24
+
+Let $x,y \in \mathbb{Z}$ If $3 \nmid xy$, then $3 \nmid x$ and $3 \nmid y$
+
+$3|xy$ iff $3|x$ or $3|y$ therefore if $3 \nmid xy$, then $3 \nmid x$ and $3 \nmid y$

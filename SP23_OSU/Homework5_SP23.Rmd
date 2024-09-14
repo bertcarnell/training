@@ -1,0 +1,254 @@
+---
+title: "Homework 5"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(19303)
+```
+
+## 1
+
+$0 \leq r \leq \rho$
+
+$$f(r) = \frac{2\pi r}{\pi \rho^2}$$
+
+$0 \leq \theta \leq 2\pi$
+
+$$f(\theta) = \frac{1}{2\pi}$$
+
+### (a)
+
+$$ \int_0^{\rho} f(r) dr = \int_0^{\rho} \frac{2\pi r}{\pi \rho^2} dr = \frac{r^2}{\rho^2} |_0^{\rho} = 1 - 0 = 1$$
+
+$$ \int_0^{2\pi} f(\theta) d\theta = \int_0^{2\pi} \frac{1}{2\pi} d\theta = \frac{\theta}{2\pi} |_0^{2\pi} = 1 - 0 = 1$$
+
+### (b)
+
+$$ F(r) = \int_0^{r} f(r) dr = \int_0^{r} \frac{2\pi r}{\pi \rho^2} dr = \frac{r^2}{\rho^2} |_0^{r} = \frac{r^2}{\rho^2}$$
+
+$$ F(\theta) = \int_0^{\theta} f(\theta) d\theta = \int_0^{\theta} \frac{1}{2\pi} d\theta = \frac{\theta}{2\pi} |_0^{\theta} = \frac{\theta}{2\pi}$$
+
+### c
+
+$$ E(\theta^2) = \int_0^{2\pi} \theta^2 f(\theta) d\theta = \int_0^{2\pi} \frac{\theta^2}{2\pi} d\theta = \frac{\theta^3}{6\pi} |_0^{2\pi} = \frac{4}{3} \pi^2$$
+
+$$ E(\theta^3) = \int_0^{2\pi} \theta^3 f(\theta) d\theta = \int_0^{2\pi} \frac{\theta^3}{2\pi} d\theta = \frac{\theta^4}{8\pi} |_0^{2\pi} = 2 \pi^3$$
+
+check
+
+```{r}
+N <- 100000
+th <- runif(N, 0, 2*pi)
+mean(th^2)
+4/3*pi*pi
+mean(th^3)
+2*pi^3
+```
+
+### d
+
+```{r}
+N <- 10000
+r <- runif(N, 0, 1)
+th <- runif(N, 0, 2*pi)
+y <- r*sin(th)
+x <- r*cos(th)
+plot(x, y, col="blue")
+```
+
+Dots are more dense near the center - not uniform.
+
+### (e)
+
+Theorem
+
+if $Y = u(X)$ with density $f(x)$ on $c_1 \leq x \leq c_2$ and if
+$X = v(Y)$ then
+
+$$f_Y(y) = f_X(v(y)) |v'(y)|$$
+
+Now
+
+$C = 2 \pi R$ with $f(r) = \frac{1}{\rho}$ for $0 \leq r \leq \rho$
+
+$R = \frac{1}{2\pi}C$
+
+$$f_C(c) = f_R\left(\frac{1}{2\pi}c\right) \frac{1}{2\pi} = \frac{1}{\rho} \frac{1}{2\pi} = \frac{1}{2\pi\rho}$$
+
+on $0 \leq c \leq 2\pi \rho$
+
+$A = \pi R^2$ with $f(r) = \frac{1}{\rho}$ for $0 \leq r \leq \rho$
+
+$R = \sqrt{\frac{A}{\pi}}$
+
+$$f_A(a) = f_R\left(\sqrt{\frac{a}{\pi}}\right) \frac{1}{\sqrt{\pi}}\frac{1}{2\sqrt{a}} = \frac{1}{\rho} \frac{1}{2\sqrt{\pi a}} = \frac{1}{2\rho \sqrt{\pi a}}$$
+
+on $0 \leq a \leq \pi \rho^2$
+
+Check
+
+```{r}
+integrate(f = function(c) rep(1/2/pi/5, length = length(c)), 0, 2*pi*5)
+integrate(f = function(a) 1/2/5/sqrt(pi*a), 0, pi*5^2)
+```
+
+Next
+
+$C = 2 \pi R$ with $f(r) = \frac{2\pi r}{\pi \rho^2}$ for $0 \leq r \leq \rho$
+
+$R = \frac{1}{2\pi}C$
+
+$$f_C(c) = f_R\left(\frac{1}{2\pi}c\right) \frac{1}{2\pi} = \frac{2\pi \frac{c}{2\pi}}{\pi \rho^2} \frac{1}{2\pi} = \frac{c}{2 \pi^2 \rho^2}$$
+
+on $0 \leq c \leq 2\pi \rho$
+
+$A = \pi R^2$ with $f(r) = \frac{1}{\rho}$ for $0 \leq r \leq \rho$
+
+$R = \sqrt{\frac{A}{\pi}}$
+
+$$f_A(a) = f_R\left(\sqrt{\frac{a}{\pi}}\right) \frac{1}{\sqrt{\pi}}\frac{1}{2\sqrt{a}} = \frac{2\pi \sqrt{\frac{a}{\pi}}}{\pi \rho^2} \frac{1}{2\sqrt{\pi a}} = \frac{1}{\pi\rho^2}$$
+
+on $0 \leq a \leq \pi \rho^2$
+
+Check
+
+```{r}
+integrate(f = function(c) c/2/pi/pi/5/5, 0, 2*pi*5)
+integrate(f = function(a) rep(1/pi/5^2, length = length(a)), 0, pi*5^2)
+```
+
+
+## 2
+
+### (a)
+
+$X \sim N(\mu, \sigma^2) \sim N(\mu, 2^2)$
+
+$\bar{X} \sim N(\mu, \frac{\sigma^2}{n}) \sim N(\mu, \frac{2^2}{n})$
+
+$$P(\mu-0.5 \leq \bar{x} \leq \mu+0.5) = P(-0.5\frac{\sqrt{n}}{2} \leq \frac{\sqrt{n}}{2}(\bar{x} - \mu) \leq 0.5\frac{\sqrt{n}}{2})$$
+
+```{r}
+n <- c(16, 25, 36, 49)
+pnorm(0.5*sqrt(n)/2, 0, 1) - pnorm(-0.5*sqrt(n)/2, 0, 1)
+
+```
+
+### (b)
+
+```{r}
+plot(n, pnorm(0.5*sqrt(n)/2, 0, 1) - pnorm(-0.5*sqrt(n)/2, 0, 1), xlab = "n", ylab = "Probability of sample mean within 1/2 ounce of true mean", type = "l")
+
+```
+
+### (c)
+
+Increasing $n$ yields an increasing probability of the sample mean being within
+1/2 ounce of the true mean.
+
+As the sample size gets larger, we expect the sample mean to be closer and closer
+to the true mean, therefore it will have a higher probability of being within
+an interval.
+
+### (d)
+
+```{r}
+f <- function(n) (pnorm(0.5*sqrt(n)/2, 0, 1) - pnorm(-0.5*sqrt(n)/2, 0, 1) - 0.95)^2
+optimize(f, lower = 0, upper = 200)
+```
+
+$n$ of 64 which makes 0.5 ounce equal to two standard deviations of $\bar{x}$
+
+```{r}
+pnorm(2, 0, 1) - pnorm(-2, 0, 1)
+```
+
+## 3
+
+$Y \sim bernoulli(p=0.2)$
+
+
+### (a)
+
+Exact
+
+$\bar{Y} \sim binomial(p=0.2, n=1000)$
+
+Approximate
+
+$\bar{Y} \sim N(\mu = p, \sigma^2 = \frac{p(1-p)}{n}) \sim N(0.2, 0.00016)$
+
+### (b)
+
+$$P(-x \leq \bar{Y} - 0.2 \leq x) = 0.95 = P(-x \frac{1}{\sqrt{0.00016}} \leq (\bar{Y}-0.2) \frac{1}{\sqrt{0.00016}} \leq x \frac{1}{\sqrt{0.00016}})$$
+
+0.95 is about 1.959964 standard deviations from the mean
+
+$x / \sqrt{0.00016} = 1.959964$ or $x = 0.0247918$
+
+check
+
+```{r}
+pbinom((0.0247918+0.2)*1000, 1000, 0.2) - pbinom((-0.0247918+0.2)*1000, 1000, 0.2)
+pnorm(0.0247918/sqrt(0.00016), 0, 1) - pnorm(-0.0247918/sqrt(0.00016), 0, 1)
+```
+
+### (c)
+
+$$P((\mu-0.01) \leq \bar{Y} \leq \mu+x) = 0.95 = P(-0.01\sqrt{\frac{n}{p(1-p)}} \leq (\bar{Y}-\mu)\sqrt{\frac{n}{p(1-p)}} \leq 0.01 \sqrt{\frac{n}{p(1-p)}})$$
+
+$-0.01\sqrt{\frac{n}{p(1-p)}}$ needs to be 1.959964 standard deviations
+
+$1.959964 = 0.01*\sqrt{n/0.2/0.8}$ therefore $n = (1.959964 * \sqrt{0.2* 0.8} / 0.01)^2 = 6146$
+
+```{r}
+pnorm(0.01*sqrt(6146/0.2/0.8), 0, 1) - pnorm(-0.01*sqrt(6146/0.2/0.8))
+```
+
+## 4
+
+$0 < x< 1, 0 < y < 1$
+
+$$f_{X,Y}(x,y) = x + y$$
+
+### (a)
+
+$$f_X(x) = \int_{y=0}^1 f(x,y) dy = xy + 1/2 y^2 |_0^1 = x + 1/2$$
+
+$$f_Y(y) = \int_{x=0}^1 f(x,y) dx = 1/2 x^2 + xy |_0^1 = y + 1/2$$
+
+check
+
+```{r}
+integrate(f=function(x) x + 0.5, lower = 0, upper = 1)
+```
+
+### (b)
+
+$$f(x|Y=y) = \frac{f(x,y)}{f(y)} = \frac{x+y}{y + 1/2}$$
+
+check
+
+```{r}
+integrate(f=function(x) (x + 0.75)/(0.75 + 0.5), lower = 0, upper = 1)
+```
+
+### (c)
+
+X and Y are independent if P(X=x, Y=x) = P(X=x)P(Y=y)
+
+$$f(x,y) = x + y \neq f(x)f(y) = (x+1/2)(y+1/2)$$
+
+Also 
+
+$$f(x|Y=y) =  \frac{x+y}{y + 1/2} \neq f(x) = x+1/2$$
+
+
+
+

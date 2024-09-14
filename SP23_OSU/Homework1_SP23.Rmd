@@ -1,0 +1,278 @@
+---
+title: "Homework1"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+### a
+
+```{r}
+if (!require(AER))
+{
+  install.packages("AER")
+}
+data("CASchools")
+nrow(CASchools)
+```
+
+### b
+
+```{r}
+names(CASchools)
+CASchools$student_teacher_ratio <- with(CASchools, students / teachers)
+median(CASchools$student_teacher_ratio)
+```
+
+### c
+
+```{r}
+mean(CASchools$read)
+sd(CASchools$read)
+quantile(CASchools$read, probs = c(0.25, 0.50, 0.75))
+
+mean(CASchools$math)
+sd(CASchools$math)
+quantile(CASchools$math, probs = c(0.25, 0.50, 0.75))
+```
+
+### d
+
+```{r}
+med <- median(CASchools$student_teacher_ratio)
+CASchools$group <- with(CASchools, ifelse(student_teacher_ratio > med, 1, 0))
+```
+
+### e
+
+```{r}
+boxplot(student_teacher_ratio ~ group, data = CASchools, 
+        xlab = "Group: 1 for ratios above the median, 0 otherwise",
+        ylab = "Student to Teacher Ratio")
+
+require(ggplot2)
+ggplot(CASchools, aes(y = student_teacher_ratio, group = group)) + 
+  geom_boxplot() +
+  labs(x = "Group: 1 for ratios above the median, 0 otherwise",
+       y = "Student to Teacher Ratio")
+
+```
+
+### f
+
+```{r}
+hist(CASchools$income, 
+     main = paste("Mean:", round(mean(CASchools$income), 3), 
+                  "  Median:", round(median(CASchools$income), 3)),
+     xlab = "School District Average Income")
+abline(v = median(CASchools$income), col = "red")
+abline(v = mean(CASchools$income), col = "blue")
+
+ggplot(CASchools, aes(x = income)) +
+  geom_histogram(bins = 11, col = "black") +
+  labs(x = "Income") +
+  geom_vline(xintercept = median(CASchools$income), col = "red") +
+  geom_vline(xintercept = mean(CASchools$income), col = "blue")
+```
+
+### g
+
+```{r}
+plot(x = CASchools$income, y = CASchools$math, 
+     xlab = "School District Average Income ($1,000)",
+     ylab = "Average Math Score")
+
+ggplot(CASchools, aes(x = income, y = math)) +
+  geom_point() +
+  labs(x = "School District Average Income ($1,000)",
+       y = "Average Math Score")
+```
+
+## 1
+
+```{r}
+load("boston_sh.RData")
+```
+
+### a
+
+```{r}
+mean(boston_sh$chas)
+```
+
+### b
+
+```{r}
+mean(boston_sh$medv)
+median(boston_sh$medv)
+sd(boston_sh$medv)
+```
+
+### c
+
+```{r}
+ind <- which(boston_sh$chas == 1)
+mean(boston_sh$medv[ind])
+median(boston_sh$medv[ind])
+sd(boston_sh$medv[ind])
+
+by(boston_sh$medv, boston_sh$chas, mean)
+by(boston_sh$medv, boston_sh$chas, median)
+by(boston_sh$medv, boston_sh$chas, sd)
+
+require(dplyr)
+boston_sh %>%
+  dplyr::group_by(chas) %>%
+  dplyr::summarize(mean = mean(medv),
+                   median = median(medv),
+                   sd = sd(medv))
+```
+
+### d
+
+Conclude that the distribution of home price near the Charles River may be higer
+than the average.  Need to conduct a statistical test.
+
+### e
+
+```{r}
+ind <- which(boston_sh$chas == 1)
+
+par(mfrow=c(2,1))
+hist(boston_sh$medv[-ind], main = "Without Charles River", 
+     xlab = "", freq = FALSE)
+hist(boston_sh$medv[ind], main = "With Charles River", 
+     xlab = "Median Home Value ($1,000)", freq = FALSE)
+
+ggplot(boston_sh, aes(x = medv, group = chas)) +
+  geom_histogram() +
+  facet_grid(chas ~ .) +
+  labs(x = "Median Home Price ($1,000)")
+
+ggplot(boston_sh, aes(x = medv, group = chas)) +
+  geom_density() +
+  facet_grid(chas ~ .) +
+  labs(x = "Median Home Price ($1,000)")
+
+```
+
+### f
+
+They have different distributions
+
+## 2
+
+The package `prob` has been archived
+
+```{r}
+#if (!require(prob)) {
+  # install.packages("prob")
+  # install.packages(c("fBasics", "timeSeries"))
+  # install.packages("fOptions_3042.86.tar.gz", repos = NULL)
+  # install.packages("fAsianOptions_3042.82.tar.gz", repos = NULL, dependencies = TRUE)
+  # install.packages("prob_1.0-1.tar.gz", repos = NULL)
+#}
+```
+
+### a
+
+```{r}
+# S <- prob::tosscoin(times = 4)
+
+S <- expand.grid(toss1 = c("H", "T"),
+                 toss2 = c("H", "T"),
+                 toss3 = c("H", "T"),
+                 toss4 = c("H", "T"))
+
+```
+
+### b
+
+```{r}
+A <- subset(S, toss2 == "H")
+A
+```
+
+### c
+
+```{r}
+B <- subset(S, toss4 == "H")
+B
+```
+
+
+### d
+
+```{r}
+dplyr::union(A, B)
+dplyr::intersect(A, B)
+```
+
+## 3
+
+### a
+
+```{r}
+samp <- runif(n = 20, min = 30, max = 100)
+
+samp_wrong <- samp
+samp_wrong[which.min(samp)] <- -30
+
+mean(samp)
+mean(samp_wrong)
+
+median(samp)
+median(samp_wrong)
+```
+
+### b
+
+```{r}
+sd(samp)
+sd(samp_wrong)
+
+diff(quantile(samp, probs = c(0.25, 0.75)))
+diff(quantile(samp_wrong, probs = c(0.25, 0.75)))
+
+```
+
+### c
+
+```{r}
+samp <- rbeta(1000, shape1 = 6, shape2 = 2) * 8/6 * 50
+hist(samp, breaks = 50)
+
+mean(samp)
+median(samp)
+
+```
+
+Choose 65, so the median is larger than the mean
+
+### d
+
+1. Median B > Median A
+2. IQR B < IQR A
+3. Range B < Range A
+
+### e
+
+$$\frac{1}{n-1} \sum_1^n (y_i - \bar{y})^2 = \frac{1}{n-1} \sum_1^n \left[y_i^2 - 2 y_i \bar{y} + \bar{y}^2 \right]$$
+
+$$ = \frac{1}{n-1} \left[ \sum_1^n y_i^2 - \sum_1^n 2 y_i \bar{y} + \sum_1^n \bar{y}^2 \right]$$
+
+$$ = \frac{1}{n-1} \left[ \sum_1^n (y_i^2) - 2 \bar{y} \sum_1^n (y_i) + n \bar{y}^2 \right]$$
+
+$$ = \frac{1}{n-1} \left[ \sum_1^n (y_i^2) - 2 \bar{y} (n\bar{y}) + n \bar{y}^2 \right]$$
+
+$$ = \frac{1}{n-1} \left[ \sum_1^n (y_i^2) - 2 n \bar{y}^2 + n \bar{y}^2 \right]$$
+
+$$ = \frac{1}{n-1} \left[ \sum_1^n (y_i^2) - n \bar{y}^2 \right]$$
+
+

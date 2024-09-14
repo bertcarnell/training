@@ -1,0 +1,262 @@
+---
+title: "Homework 4"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(19303)
+```
+
+## 1
+
+```{r}
+m <- 16 # gal
+s <- 4 #gal
+```
+
+### a
+
+Probability of greater than 28 gal of gas
+
+```{r}
+1 - pnorm(28, mean = m, sd = s)
+pnorm(28, mean = m, sd = s, lower.tail = FALSE)
+```
+
+### b
+
+Probability of gas consumption in the range [12,20]
+
+```{r}
+pnorm(20, m, s) - pnorm(12, m, s)
+```
+
+### c
+
+Probability of gas consumption within 2 standard deviations of the mean
+
+```{r}
+pnorm(m + 2*s, m, s) - pnorm(m - 2*s, m, s)
+```
+
+### d
+
+amount of gas that only 5% of drivers will exceed
+
+```{r}
+qnorm(0.95, m, s)
+```
+
+### e
+
+```{r}
+N <- 1000000
+x <- rnorm(N, m, s)
+length(which(x > 28)) / N
+length(which(x > 12 & x < 20)) / N
+quantile(x, prob = 0.95)
+```
+
+## 2
+
+```{r}
+g <- function(x) {
+  ifelse(x >= 0 & x <= 3, 2/9*x, 0)
+}
+
+G <- function(x) {
+  ifelse(x >= 0 & x <= 3, 1/9*x^2, 
+         ifelse(x < 0, 0, 1))
+}
+```
+
+### a
+
+$$P(X \leq 1)$$
+
+```{r}
+G(1)
+integrate(g, -Inf, 1)
+```
+
+### b
+
+$$P(0.5 \leq X \leq 2)$$
+
+```{r}
+G(2) - G(0.5)
+integrate(g, 0.5, 2)
+```
+
+### c
+
+$$P(X > 2)$$
+
+```{r}
+1-G(2)
+integrate(g, 2, Inf)
+```
+
+### d
+
+```{r}
+x <- seq(-1, 4, length=500)
+plot(x, g(x), xlab = "Time to finish 3 hr exam", ylab = "Density", type="l")
+plot(x, G(x), xlab = "Time to finish 3 hr exam", ylab = "Probabiliy of a time less than x", type="l")
+```
+
+### e
+
+$$P(1 \leq X \leq 2)$$
+
+```{r}
+G(2) - G(1)
+integrate(g, 1, 2)
+```
+
+### f
+
+Find the median
+
+```{r}
+optimize(f = function(z) (G(z) - 0.5)^2, interval = c(0, 3))
+sqrt(4.5)
+```
+
+$$0.5 = G(x) = \frac{1}{9}x^2$$
+
+$$x = \sqrt{4.5}$$
+
+### g
+
+$$E(X) = \int_{-\infty}^{\infty} x g(x) dx$$
+
+$$ = \int_{0}^{3} x \frac{2}{9} x dx$$
+
+$$ = \frac{2}{27} 3^3 - 0 = 2$$
+
+```{r}
+integrate(function(z) z*g(z), -Inf, Inf)
+```
+
+### h
+
+$$V(X) = \int_{-\infty}^{\infty} x^2 g(x) dx - [E(x)]^2$$
+
+$$ = \int_{0}^{3} x^2 \frac{2}{9} x dx - 2^2$$
+
+$$ = \frac{2}{(9)(4)} 3^4 - 0 - 4 = 0.5$$
+
+```{r}
+integrate(function(z) z^2*g(z), -Inf, Inf)$value - 2^2
+```
+
+### i
+
+$$h(X) = 4 + X^2$$
+
+$$E(h(X)) = \int_{-\infty}^{\infty} h(x) g(x) dx$$
+
+$$ = \int_{0}^{3} (4+x^2) \frac{2}{9} x dx$$
+
+$$ = \frac{2}{9} (2*3^2 + 3^4/4) - 0 = 8.5$$
+
+```{r}
+integrate(function(z) (4+z^2)*g(z), -Inf, Inf)
+
+N <- 1000000
+x <- sqrt(9*runif(N, 0, 1))
+mean(x)
+y <- 4+x^2
+mean(y)
+```
+
+## 3
+
+### a
+
+Gamma pdf $x > 0$
+
+$$f(x) = \frac{\beta^\alpha}{\Gamma(\alpha)}x^{\alpha-1}e^{-\beta x}$$
+
+When $\alpha = \beta = 1$ then 
+
+$$f(x) = e^{- x}$$
+
+which is equivalent to an exponential distribution with $\lambda = 1$ and $x>0$
+
+$$f(x) = \lambda e^{-\lambda x} = e^{- x}$$
+
+
+### b
+
+$$E(X) = \int_{-\infty}^{\infty} xf(x)dx = \int_{0}^{\infty} x e^{-x}dx$$
+
+$u=x$, $dv=e^{-x}dx$, $du=dx$, $v=-e^{-x}$
+
+$$E(X) = -xe^{-x} |_0^{\infty} - \int_{0}^{\infty} - e^{-x}dx = -xe^{-x} |_0^{\infty} - e^{-x}|_0^{\infty} = -0 - (0) - (0) + 1 = 1 $$
+
+
+$$V(X) = \int_{-\infty}^{\infty} x^2f(x)dx - [E(X)]^2 = \int_{0}^{\infty} x^2 e^{-x}dx - 1$$
+
+$u=x^2$, $dv=e^{-x}dx$, $du=2xdx$, $v=-e^{-x}$
+
+$$V(X) = -x^2e^{-x} |_0^{\infty} + \int_{0}^{\infty} 2xe^{-x}dx - 1$$
+
+$u=2x$, $dv=e^{-x}dx$, $du=2dx$, $v=-e^{-x}$
+
+$$V(X) = -x^2e^{-x} |_0^{\infty} + (-2xe^{-x}) |_0^{\infty} - \int_{0}^{\infty} -2e^{-x}dx - 1$$
+
+$$= -x^2e^{-x} |_0^{\infty} + (-2xe^{-x}) |_0^{\infty} - 2e^{-x}|_0^{\infty} - 1 = 0 + 0 - 0 + 2 - 1 = 1$$
+
+```{r}
+# check
+N <- 1000000
+mean(rexp(N, 1))
+var(rexp(N, 1))
+```
+
+### c
+
+For this exponential distribution, the CDF is 
+
+$$F(x) = \int_{-\infty}^{x} f(x)dx  = \int_0^{x} e^{-x} dx = -e^{-x} - (-1) = 1 - e^{-x} $$
+
+$$P(X \leq 4) = F(4) = 1 - e^{-4}$$
+
+```{r}
+1-exp(-4)
+# check
+pexp(4, 1)
+```
+
+### d
+
+$$P(2 \leq X \leq 5) = F(5) - F(2) = 1 - e^{-5} - 1 + e^{-2}$$
+
+```{r}
+exp(-2) - exp(-5)
+# check
+pexp(5, 1) - pexp(2, 1)
+```
+
+### e
+
+$$F(x) = 0.95 = 1 - e^{-x}$$
+
+$$x = -\ln(-(0.95 - 1))$$
+
+```{r}
+-log(-(0.95 - 1))
+# check
+qexp(0.95, 1)
+```
+
+
+
+

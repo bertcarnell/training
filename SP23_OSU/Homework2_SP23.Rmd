@@ -1,0 +1,250 @@
+---
+title: "Homework 2"
+author: "Rob Carnell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1
+
+```{r}
+N <- 40
+n_chess <- 18
+n_scrabble <- 20
+n_settlers <- 27
+n_chess_scrabble <- 7
+n_scrabble_settlers <- 12
+n_chess_scrabble_settlers <- 4
+```
+
+Let
+
+- $A$ be the set of chess players
+- $B$ be the set of scrabble players, and 
+- $C$ be the set of Settlers players
+
+### i
+
+$$1 = P(A) + P(B) + P(C) - P(A \cap B) - P(B \cap C) - P(A \cap C) + P(A \cap B \cap C)$$
+
+$$P(A \cap C) = P(A) + P(B) + P(C) - P(A \cap B) - P(B \cap C) + P(A \cap B \cap C) - 1$$
+
+
+```{r}
+n_chess / N + n_scrabble / N + n_settlers / N - n_chess_scrabble / N - n_scrabble_settlers / N + n_chess_scrabble_settlers / N - 1
+```
+
+### ii
+
+$$P(A \cap C) = P(A \cap \bar{B} \cap C) + P(A \cap B \cap C)$$
+
+$$P(A \cap \bar{B} \cap C) = P(A \cap C) - P(A \cap B \cap C)$$
+
+```{r}
+n_chess / N + n_scrabble / N + n_settlers / N - n_chess_scrabble / N - n_scrabble_settlers / N - 1
+```
+
+## 2
+
+### a
+
+```{r}
+X <- expand.grid(Instructor1 = c("Probability", "Inference", "Statistical Computing"),
+            Instructor2 = c("Probability", "Inference", "Statistical Computing"))
+X
+```
+
+Probability of teaching different courses
+
+```{r}
+nrow(X[X$Instructor1 != X$Instructor2,]) / nrow(X)
+```
+
+### b
+
+$P(A) = P(B) = 1/3$ and $P(A \cap B) = 1/10$
+
+```{r}
+N <- 100000
+X <- sample(c("AB", "AnB", "nAB", "nAnB"), size = N, replace = TRUE, prob = c(1/10, 7/30, 7/30, 13/30))
+```
+
+#### i
+
+$P(\bar{B}) = 1 - P(B) = \frac{2}{3}$
+
+```{r}
+length(which(X %in% c("AnB", "nAnB"))) / N
+2/3
+```
+
+#### ii
+
+$P(A \cap \bar{B})  = P(A) - P(A \cap B) = \frac{7}{30}$
+
+```{r}
+length(which(X %in% c("AnB"))) / N
+7/30
+```
+
+#### iii
+
+$P(A \cup \bar{B}) = P(A) + P(\bar{B}) - P(A \cap \bar{B}) = \frac{1}{3} + \frac{2}{3} - \frac{7}{30} = \frac{23}{30}$
+
+```{r}
+length(which(X %in% c("AB", "AnB", "nAnB"))) / N
+23/30
+```
+
+#### iv
+
+$P(\hat{A} \cup \hat{B}) = P(\hat{A}) + P(\hat{B}) - P(\hat{A} \cap \hat{B}) = P(\hat{A}) + P(\hat{B}) - (P(\bar{B})-P(A \cap \bar{B})) = P(\bar{A}) + P(A \cap \bar{B}) = \frac{2}{3} + \frac{7}{30} = \frac{27}{30}$
+
+```{r}
+length(which(X %in% c("AnB", "nAB", "nAnB"))) / N
+27/30
+```
+
+## 3
+
+### a
+
+Number of arrangements of SYSTEM:  If all letters are distinct, there are $6!$ ways, but since once letter is indistinguishable, there are only half as many $6!/2 = $ `r factorial(6)/2`
+
+```{r}
+require(arrangements)
+X <- arrangements::permutations(c("S", "Y", "S", "T", "E", "M"))
+Y <- apply(X, 1, paste0, collapse="")
+length(unique(Y))
+```
+
+### b
+
+How many ways can we make two teams of 5 plays out of a group of 10.  The teams
+are indistinguishable and players all play the same role.
+
+Number of ways = ${10\choose 5} / 2 = $ `r choose(10, 5) / 2` 
+
+The division by 2 is because the other team is just a reflection of the first team.
+
+### c
+
+Suppose that a room contains n people, what is the number of ways that at
+least two  of them have a common birthday.  no leap years.
+
+$P($ at least two with the same birthday $) = 1-P($ none with the same birthday $)$
+
+The first person has 365 possible birthdays.  The second has 364 possible. and so on.
+
+$$= 1 - \frac{365}{365} \frac{364}{365} \frac{363}{365} \ldots \frac{365-n+1}{365}$$
+
+$$= 1 - \frac{365!}{(365-n)!\ \ 365^n}$$
+
+For a classroom of 30 people:  `r 1 - exp(lfactorial(365) - lfactorial(365-30) - 30*log(365))`
+
+### c
+
+A box contains 12 black and 8 green marbles.  How many ways can 3 black and 2 green
+marbles be chosen?
+
+Number of ways $= {12\choose 3}{8 \choose 2} = $ `r choose(12,3)*choose(8,2)`
+
+## 4
+
+### a
+
+$$P(A)P(A \cap B) = P(A)\ \ P(A)P(B|A) = [P(A)]^2 P(B|A) \le [P(A)]^2$$
+
+because $0 \le P(B|A) \le 1$
+
+### b
+
+if $P(A) = P(B)$ and $P(A) \ne 0$ then
+
+$$\frac{P(A \cap B)}{P(A)} = \frac{P(A \cap B)}{P(B)}$$
+
+$$P(B|A) = P(A|B)$$
+
+### c
+
+if $A \subseteq B$ and $P(A) > 0$ and $P(B) > 0$, then
+
+$$P(B|A) = 1$$
+
+Because if A is true, the B is automatically true since A is a subset of B.
+
+$$P(A \cap B) = P(A)$$
+
+Since A is a subset of B
+
+$$P(A|B) = \frac{P(A \cap B)}{P(B)} = \frac{P(A)}{P(B)}$$
+
+## 5
+
+$P(X > 70) = 0.6$ and $P(X > 80) = 0.2$
+
+$$P(X>80 | X>70) = \frac{P(X>80 \cap X>70)}{P(X>70)} = \frac{P(X > 80)}{P(X>70)} = \frac{0.2}{0.6} = \frac{1}{3}$$
+
+## 6
+
+- $P(M_1) = 0.2$
+- $P(M_2) = 0.3$
+- $P(M_3) = 0.5$
+- $P(D|M_1) = 0.05$
+- $P(D|M_2) = 0.03$
+- $P(D|M_3) = 0.03$
+
+### a
+
+$$P(D) = \sum_1^3 P(D|M_i)P(M_i) = $$ 
+
+`r 0.05*0.2+0.03*0.3+0.02*0.5`
+
+### b
+
+$$P(M_1|D) = P(D|M_1)P(M_1) / P(D) = $$ 
+
+`r 0.05*0.2/(0.05*0.2+0.03*0.3+0.02*0.5)`
+
+## 7
+
+10 components
+4 defective
+
+### a 
+
+$P($ at least one defect in 3 samples without replacement $) = 1-P($ no defective in 3 samples $)$
+
+$$=1-\frac{6}{10}\frac{5}{9}\frac{4}{8} = $$ 
+
+`r 1-6/10*5/9*4/8`
+
+### b
+
+$P($ third defective given first 2 not defective $) = \frac{4}{8} = \frac{1}{2}$ 
+
+### c
+
+$P($ third defective given one defective and one not $) = \frac{3}{8}$
+
+## 8
+
+- $P(D) = 0.01$
+- $P(+|D) = 0.8$
+- $P(-|\bar{D}) = 0.904$
+
+### a
+
+$$P(+) = P(+|D)P(D) + P(+|\bar{D})P(\bar{D}) = (0.8)(0.01)+(0.096)(0.99) = $$ 
+
+`r 0.8*0.01+0.096*0.99`
+
+### b
+
+$$P(D|+) = \frac{P(+|D)P(D)}{P(+)} = \frac{(0.8)(0.01)}{0.8*0.01+0.096*0.99} =$$ 
+
+`r 0.8*0.01/(0.8*0.01+0.096*0.99)`
